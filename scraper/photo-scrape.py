@@ -289,43 +289,41 @@ def get_profile_photos(ids):
                 pv_link = j.get_attribute("href")
                 driver.get(pv_link)
                 gallery_walker()
+            # Move to albums
+            print("Generating albums page...")
+            f1 = furl(pvoid_link)
+            int_fb_id = f1.args.popvalue('owner_id')
+            account_id = int_fb_id.strip()
+            f2 = furl(photos_url)
+            userid_path = str(f2.path)
+            userid = userid_path.strip('/')
+            back_album_url = "albums/?owner_id="
+            album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
+            print(album_page_url)
+            driver.get(album_page_url)
             try:
-                print("Generating albums page...")
-                f1 = furl(pvoid_link)
-                int_fb_id = f1.args.popvalue('owner_id')
-                account_id = int_fb_id.strip()
-                f2 = furl(photos_url)
-                userid_path = str(f2.path)
-                userid = userid_path.strip('/')
-                back_album_url = "albums/?owner_id="
-                album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
-                print(album_page_url)
-                driver.get(album_page_url)
-                try:
-                    wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
-                    photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
-                    for bb in photo_albums_links:
-                        album_link = bb.get_attribute("href")
-                        print("Opening  " + album_link)
-                        k = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
-                        k.writelines(album_link)
-                        k.write("\n")
-                        k.close()
-                        with open("/tmp/album_url.txt") as kfile:
-                            for line in kfile:
-                                driver.get(line)
-                                print("Opening album  " + line)
-                                album_walker()
-                        print("Cleaning...")
-                        if os.path.exists("/tmp/album_url.txt"):
-                            os.remove("/tmp/album_url.txt")
-                        else:
-                            print("The file does not exist")
-                except NoSuchElementException or TimeoutException:
-                    print("No more albums found")
-                    clean_file_sets()
-            except Exception:
-                print("Unable to generate album page or find any albums")
+                wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
+                photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
+                for b in photo_albums_links:
+                    album_link = b.get_attribute("href")
+                    print("Opening  " + album_link)
+                    k = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
+                    k.writelines(album_link)
+                    k.write("\n")
+                    k.close()
+                    with open("/tmp/album_url.txt") as kfile:
+                        for line in kfile:
+                            driver.get(line)
+                            print("Opening album  " + line)
+                            album_walker()
+                    print("Cleaning...")
+                    if os.path.exists("/tmp/album_url.txt"):
+                        os.remove("/tmp/album_url.txt")
+                    else:
+                        print("The file does not exist")
+            except NoSuchElementException or TimeoutException:
+                print("No more albums found")
+                clean_file_sets()
         except NoSuchElementException:
             print("Fuck!! No Photos Found!")
             clean_file_sets()
