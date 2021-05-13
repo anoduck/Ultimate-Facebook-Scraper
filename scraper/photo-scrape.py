@@ -282,17 +282,16 @@ def get_profile_photos(ids):
         try:
             photos_url = driver.find_element_by_xpath("//a[text()='Photos']").get_attribute("href")  # noqa: E501
             driver.get(photos_url)
-            wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//section/a")))
+            wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//section/a")))  # noqa: E501
+            pvoid_link = driver.find_element_by_xpath("//div[1]/section/a").get_attribute("href")  # noqa: E501
             photos_view = driver.find_elements_by_xpath("//section/a")
             for j in photos_view:
                 pv_link = j.get_attribute("href")
                 driver.get(pv_link)
                 gallery_walker()
-                driver.back()
-                image_link = driver.current_url
             try:
                 print("Generating albums page...")
-                f1 = furl(image_link)
+                f1 = furl(pvoid_link)
                 int_fb_id = f1.args.popvalue('owner_id')
                 account_id = int_fb_id.strip()
                 f2 = furl(photos_url)
@@ -303,7 +302,7 @@ def get_profile_photos(ids):
                 print(album_page_url)
                 driver.get(album_page_url)
                 try:
-                    wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))
+                    wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
                     photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
                     for bb in photo_albums_links:
                         album_link = bb.get_attribute("href")
