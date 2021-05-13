@@ -39,13 +39,14 @@ from furl import furl
 
 import utils
 import yaml
-# import seleniumsupport
-from ratelimit import limits
+# from ratelimit import limits
 from selenium import webdriver
-# from selenium_stealth import stealth
 from selenium.webdriver import Firefox
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 # -------------------------------------------------------------
@@ -116,6 +117,9 @@ tsmax = 30
 # For gender scraping | Binary only, either "Male" or "Female"
 desired_gender = "Female"
 
+# Setup webdriverwait variable
+wait = WebDriverWait(driver, 37)
+
 # CHROMEDRIVER_BINARIES_FOLDER = "bin"
 Firefox(executable_path="/usr/local/bin/geckodriver")
 
@@ -133,6 +137,7 @@ Firefox(executable_path="/usr/local/bin/geckodriver")
 def gallery_walker():
     phset = False
     while phset is False:
+        wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//td/div/a")))
         photos_links = driver.find_elements_by_xpath("//td/div/a")  # noqa: E501
         for i in photos_links:
             image_link = i.get_attribute("href")
@@ -180,10 +185,11 @@ def album_walker():
             v.write("\n")
             v.close()
         try:
+            wait.until(EC.visibility_of_element_located((By.XPATH, '//article/div/div/div/a')))
             album_nextpage = driver.find_element_by_xpath("//article/div/div/div/a").get_attribute("href")  # noqa: E501
             driver.get(album_nextpage)
             print("Trying next page in album...")
-        except NoSuchElementException:
+        except NoSuchElementException or TimeoutException:
             print("Downing scraped photos")
             with open("/tmp/album_image_url.txt") as ai_file:
                 for line in ai_file:
@@ -211,7 +217,7 @@ def album_walker():
 
 
 def get_fullphoto():
-    full_Size_Url = driver.find_element_by_xpath("//div[2]/div/div[1]/div/div/div[3]/div[1]/div[2]/span/div/span/a[1]").get_attribute("href")  # noqa: E501
+    full_Size_Url = driver.find_element_by_xpath("//a[text()='View Full Size']").get_attribute("href")  # noqa: E501
     driver.get(full_Size_Url)
     time.sleep(3)
     image_number = str(randint(1, 9999))
@@ -274,17 +280,19 @@ def get_profile_photos(ids):
         render_phrase = 'Scraping photos =  ' + str(user_id)
         print(render_phrase)
         try:
-            WebDriverWait(driver, 5)
             photos_url = driver.find_element_by_xpath("//a[text()='Photos']").get_attribute("href")  # noqa: E501
             driver.get(photos_url)
+            wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//section/a")))
             photos_view = driver.find_elements_by_xpath("//section/a")
             for j in photos_view:
                 pv_link = j.get_attribute("href")
                 driver.get(pv_link)
                 gallery_walker()
+                driver.back()
+                image_link = driver.current_url
             try:
                 print("Generating albums page...")
-                f1 = furl(pv_link)
+                f1 = furl(image_link)
                 int_fb_id = f1.args.popvalue('owner_id')
                 account_id = int_fb_id.strip()
                 f2 = furl(photos_url)
@@ -295,6 +303,7 @@ def get_profile_photos(ids):
                 print(album_page_url)
                 driver.get(album_page_url)
                 try:
+                    wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))
                     photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
                     for bb in photo_albums_links:
                         album_link = bb.get_attribute("href")
@@ -313,7 +322,7 @@ def get_profile_photos(ids):
                             os.remove("/tmp/album_url.txt")
                         else:
                             print("The file does not exist")
-                except NoSuchElementException:
+                except NoSuchElementException or TimeoutException:
                     print("No more albums found")
                     clean_file_sets()
             except Exception:
@@ -548,7 +557,7 @@ def create_folder(folder):
 # ****************************************************************************
 
 
-@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+# @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def scrap_profile(ids):
     folder = os.path.join(os.getcwd(), "data")
     utils.create_folder(folder)
@@ -672,7 +681,7 @@ def login(email, password):
 # -----------------------------------------------------------------------------
 
 
-@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+# @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def scraper(**kwargs):
     with open("credentials.yaml", "r") as ymlfile:
         cfg = yaml.safe_load(stream=ymlfile)
