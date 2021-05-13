@@ -185,11 +185,10 @@ def album_walker():
             v.write("\n")
             v.close()
         try:
-            wait.until(EC.visibility_of_element_located((By.XPATH, '//article/div/div/div/a')))
             album_nextpage = driver.find_element_by_xpath("//article/div/div/div/a").get_attribute("href")  # noqa: E501
             driver.get(album_nextpage)
             print("Trying next page in album...")
-        except NoSuchElementException or TimeoutException:
+        except NoSuchElementException:
             print("Downing scraped photos")
             with open("/tmp/album_image_url.txt") as ai_file:
                 for line in ai_file:
