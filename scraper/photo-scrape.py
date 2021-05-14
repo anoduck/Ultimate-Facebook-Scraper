@@ -281,7 +281,15 @@ def get_profile_photos(ids):
         try:
             photos_url = driver.find_element_by_xpath("//a[text()='Photos']").get_attribute("href")  # noqa: E501
             driver.get(photos_url)
-            wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//section/a")))  # noqa: E501
+            wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//section/a")))
+            albums_on_pp = driver.find_elements_by_xpath(
+                "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")
+            if albums_on_pp and albums_on_pp[0].is_displayed():
+                print("Albums on Photo page")
+                internal_albums = True
+            else:
+                print("Albums not found on photos page")
+                internal_albums = False
             pvoid_link = driver.find_element_by_xpath("//div[1]/section/a").get_attribute("href")  # noqa: E501
             photos_view = driver.find_elements_by_xpath("//section/a")
             for j in photos_view:
@@ -289,40 +297,67 @@ def get_profile_photos(ids):
                 driver.get(pv_link)
                 gallery_walker()
             # Move to albums
-            print("Generating albums page...")
-            f1 = furl(pvoid_link)
-            int_fb_id = f1.args.popvalue('owner_id')
-            account_id = int_fb_id.strip()
-            f2 = furl(photos_url)
-            userid_path = str(f2.path)
-            userid = userid_path.strip('/')
-            back_album_url = "albums/?owner_id="
-            album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
-            print(album_page_url)
-            driver.get(album_page_url)
-            try:
-                wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
-                photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
-                for b in photo_albums_links:
-                    album_link = b.get_attribute("href")
-                    print("Opening  " + album_link)
-                    k = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
-                    k.writelines(album_link)
-                    k.write("\n")
-                    k.close()
+            print("Working on albums now")
+            if internal_albums is True:
+                driver.get(photos_url)
+                wait.until(EC.visibility_of_all_elements_located(
+                    (By.XPATH, "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")))
+                albums_on_pp = driver.find_elements_by_xpath(
+                    "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")
+                for n in albums_on_pp:
+                    int_album_link = n.get_attribute("href")
+                    print("Opening  " + int_album_link)
+                    w = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")
+                    w.writelines(int_album_link)
+                    w.write("\n")
+                    w.close()
                     with open("/tmp/album_url.txt") as kfile:
                         for line in kfile:
                             driver.get(line)
                             print("Opening album  " + line)
                             album_walker()
-                    print("Cleaning...")
-                    if os.path.exists("/tmp/album_url.txt"):
-                        os.remove("/tmp/album_url.txt")
-                    else:
-                        print("The file does not exist")
-            except NoSuchElementException or TimeoutException:
-                print("No more albums found")
-                clean_file_sets()
+            else:
+                print("Generating albums page...")
+                f1 = furl(pvoid_link)
+                int_fb_id = f1.args.popvalue('owner_id')
+                account_id = int_fb_id.strip()
+                f2 = furl(user_id)
+                userid_path = str(f2.path)
+                userid = userid_path.strip('/')
+                back_album_url = "albums/?owner_id="
+                album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
+                print(album_page_url)
+                driver.get(album_page_url)
+                no_album_page = driver.find_element_by_xpath(
+                    "//span[text()='The page you requested was not found.']")
+                if not no_album_page and not no_album_page.is_displayed():
+                    try:
+                        wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
+                        photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
+                        for b in photo_albums_links:
+                            album_link = b.get_attribute("href")
+                            print("Opening  " + album_link)
+                            k = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
+                            k.writelines(album_link)
+                            k.write("\n")
+                            k.close()
+                            with open("/tmp/album_url.txt") as kfile:
+                                for line in kfile:
+                                    driver.get(line)
+                                    print("Opening album  " + line)
+                                    album_walker()
+                            print("Cleaning...")
+                            if os.path.exists("/tmp/album_url.txt"):
+                                os.remove("/tmp/album_url.txt")
+                            else:
+                                print("The file does not exist")
+                    except NoSuchElementException or TimeoutException:
+                        print("No more albums found")
+                        clean_file_sets()
+                else:
+                    NoSuchElementException
+                    print("Album page not found")
+                    clean_file_sets()
         except NoSuchElementException:
             print("Fuck!! No Photos Found!")
             clean_file_sets()

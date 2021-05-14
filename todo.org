@@ -4,13 +4,9 @@
 #+EMAIL: anoduck@github.com
 #+CATEGORY: Tasks
 #+PROJECT: ORG
-#+OPTIONS: H:3 num:nil toc:nil \n:nil ::t |:t ^:t -:t f:Tls *:T
-#+STARTUP: align nodlcheck nofold oddeven hidestars
-#+DRAWERS: PROPERTIES CLOCK LOGBOOK RESULTS FEEDSTATUS
-#+COLUMNS: %38ITEM(Details) %TAGS(Context) %7SCHEDULED(Planned) %7TODO(To Do) %5PRIORITY(PRIORITY) %5DONE(Completeness){X%} %5Effort(Time){:} %6CLOCKSUM(Total){:}
 # ===============================================================================
 
-* Tasks
+* Tasks earlier development
 ** DONE Successfully scrape images and albums
 *** DONE [#A] Finish setting up gender filtering
   	- [x] Write Function
@@ -37,7 +33,10 @@
 ** DONE Scrape Based on genders
 ** TODO Setup config.py for easier configuration by users
   Why am I doing this? I do not know...
-** TODO Remove useless, broken, and unused bits of code.
+** DONE Remove useless, broken, and unused bits of code.
+* TODO Later stage developement
+** TODO Setup config.py for easier configuration
+** TODO move from username to userid
 * Docs
   - https://www.scrapingbee.com/blog/web-scraping-without-getting-blocked/
   - https://selenium-python.readthedocs.io/
