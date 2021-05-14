@@ -297,8 +297,8 @@ def get_profile_photos(ids):
                 driver.get(pv_link)
                 gallery_walker()
             # Move to albums
-            print("Working on albums now")
             if internal_albums is True:
+                print("Working on albums now")
                 try:
                     driver.get(photos_url)
                     wait.until(EC.visibility_of_all_elements_located(
@@ -312,13 +312,20 @@ def get_profile_photos(ids):
                         w.writelines(int_album_link)
                         w.write("\n")
                         w.close()
-                        with open("/tmp/album_url.txt") as kfile:
-                            for line in kfile:
-                                driver.get(line)
-                                print("Opening album  " + line)
-                                album_walker()
+                    with open("/tmp/album_url.txt") as kfile:
+                        for line in kfile:
+                            driver.get(line)
+                            print("Opening album  " + line)
+                            album_walker()
+                        print("Cleaning...")
+                        if os.path.exists("/tmp/album_url.txt"):
+                            os.remove("/tmp/album_url.txt")
+                        else:
+                            print("The file does not exist")
                 except StaleElementReferenceException:
                     print("Found a stale element in album links")
+                except NoSuchElementException or TimeoutException:
+                    print("No more albums found")
             else:
                 print("Generating albums page...")
                 f1 = furl(pvoid_link)
@@ -346,16 +353,16 @@ def get_profile_photos(ids):
                             k.writelines(album_link)
                             k.write("\n")
                             k.close()
-                            with open("/tmp/album_url.txt") as kfile:
-                                for line in kfile:
-                                    driver.get(line)
-                                    print("Opening album  " + line)
-                                    album_walker()
-                            print("Cleaning...")
-                            if os.path.exists("/tmp/album_url.txt"):
-                                os.remove("/tmp/album_url.txt")
-                            else:
-                                print("The file does not exist")
+                        with open("/tmp/album_url.txt") as kfile:
+                            for line in kfile:
+                                driver.get(line)
+                                print("Opening album  " + line)
+                                album_walker()
+                        print("Cleaning...")
+                        if os.path.exists("/tmp/album_url.txt"):
+                            os.remove("/tmp/album_url.txt")
+                        else:
+                            print("The file does not exist")
                     except NoSuchElementException or TimeoutException:
                         print("No more albums found")
                         clean_file_sets()
