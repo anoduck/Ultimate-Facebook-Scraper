@@ -324,7 +324,7 @@ def get_profile_photos(ids):
                             print("The file does not exist")
                 except StaleElementReferenceException:
                     print("Found a stale element in album links")
-                except NoSuchElementException or TimeoutException:
+                except NoSuchElementException:
                     print("No more albums found")
             else:
                 print("Generating albums page...")
@@ -363,9 +363,15 @@ def get_profile_photos(ids):
                             os.remove("/tmp/album_url.txt")
                         else:
                             print("The file does not exist")
-                    except NoSuchElementException or TimeoutException:
+                    except NoSuchElementException:
                         print("No more albums found")
                         clean_file_sets()
+        except TimeoutException:
+            print("Photo page timed out")
+            e = open("error_log.txt", "a", newline="\n")
+            e.writelines("Timeout error occurred while scrpaing " + user_id)
+            e.write("\n")
+            e.close()
         except StaleElementReferenceException:
             print("Found a reference to a stale Element in photo scrape (general error)")
         except NoSuchElementException:
