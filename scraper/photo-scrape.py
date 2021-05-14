@@ -42,7 +42,7 @@ import yaml
 # from ratelimit import limits
 from selenium import webdriver
 from selenium.webdriver import Firefox
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -299,23 +299,26 @@ def get_profile_photos(ids):
             # Move to albums
             print("Working on albums now")
             if internal_albums is True:
-                driver.get(photos_url)
-                wait.until(EC.visibility_of_all_elements_located(
-                    (By.XPATH, "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")))
-                albums_on_pp = driver.find_elements_by_xpath(
-                    "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")
-                for n in albums_on_pp:
-                    int_album_link = n.get_attribute("href")
-                    print("Opening  " + int_album_link)
-                    w = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")
-                    w.writelines(int_album_link)
-                    w.write("\n")
-                    w.close()
-                    with open("/tmp/album_url.txt") as kfile:
-                        for line in kfile:
-                            driver.get(line)
-                            print("Opening album  " + line)
-                            album_walker()
+                try:
+                    driver.get(photos_url)
+                    wait.until(EC.visibility_of_all_elements_located(
+                        (By.XPATH, "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")))
+                    albums_on_pp = driver.find_elements_by_xpath(
+                        "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")
+                    for n in albums_on_pp:
+                        int_album_link = n.get_attribute("href")
+                        print("Opening  " + int_album_link)
+                        w = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")
+                        w.writelines(int_album_link)
+                        w.write("\n")
+                        w.close()
+                        with open("/tmp/album_url.txt") as kfile:
+                            for line in kfile:
+                                driver.get(line)
+                                print("Opening album  " + line)
+                                album_walker()
+                except StaleElementReferenceException:
+                    print("Found a stale element in album links")
             else:
                 print("Generating albums page...")
                 f1 = furl(pvoid_link)
@@ -328,9 +331,11 @@ def get_profile_photos(ids):
                 album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
                 print(album_page_url)
                 driver.get(album_page_url)
-                no_album_page = driver.find_element_by_xpath(
-                    "//span[text()='The page you requested was not found.']")
-                if not no_album_page and not no_album_page.is_displayed():
+                try:
+                    no_album_page = driver.find_element_by_xpath("//span[text()='The page you requested was not found.']")
+                    if no_album_page and no_album_page.is_displayed():
+                        print("Album page not found")
+                except NoSuchElementException:
                     try:
                         wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
                         photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
@@ -354,10 +359,8 @@ def get_profile_photos(ids):
                     except NoSuchElementException or TimeoutException:
                         print("No more albums found")
                         clean_file_sets()
-                else:
-                    NoSuchElementException
-                    print("Album page not found")
-                    clean_file_sets()
+        except StaleElementReferenceException:
+            print("Found a reference to a stale Element in photo scrape (general error)")
         except NoSuchElementException:
             print("Fuck!! No Photos Found!")
             clean_file_sets()
