@@ -307,11 +307,8 @@ def get_profile_photos(ids):
                 for n in albums_on_pp:
                     int_album_link = n.get_attribute("href")
                     print("Opening  " + int_album_link)
-                    cabus = int_album_link.strip("/")
-                    a_line = facebook_https_prefix + facebook_link_body + cabus
-                    print("Album Link = " + a_line)
                     w = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")
-                    w.writelines(a_line)
+                    w.writelines(int_album_link)
                     w.write("\n")
                     w.close()
                     with open("/tmp/album_url.txt") as kfile:
