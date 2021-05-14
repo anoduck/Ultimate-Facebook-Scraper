@@ -118,7 +118,7 @@ tsmax = 30
 desired_gender = "Female"
 
 # Setup webdriverwait variable
-wait = WebDriverWait(driver, 37)
+wait = WebDriverWait(driver, 57)
 
 # CHROMEDRIVER_BINARIES_FOLDER = "bin"
 Firefox(executable_path="/usr/local/bin/geckodriver")
