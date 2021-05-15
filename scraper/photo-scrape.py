@@ -256,7 +256,7 @@ def clean_file_sets():
     elif os.path.exists("/tmp/album_image_url.txt"):
         os.remove("/tmps/album_image_url.txt")
     else:
-        print("Set files do not exist")
+        print("Clean")
 
 
 # ---------------------------------------------------------
@@ -289,12 +289,12 @@ def clean_file_sets():
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def get_profile_photos(ids):
     time.sleep(randint(tsmin, tsmax))
-    for user_id in ids:
-        # profile_imgs = []
-        driver.get(user_id)
+    for userid_profile_link in ids:
+        folder_check(userid_profile_link)
+        driver.get(userid_profile_link)
         url = driver.current_url
-        user_id = create_original_link(url)
-        render_phrase = 'Scraping photos =  ' + str(user_id)
+        userid_profile_link = create_original_link(url)
+        render_phrase = 'Scraping photos =  ' + str(userid_profile_link)
         print(render_phrase)
         try:
             photos_url = driver.find_element_by_xpath("//a[text()='Photos']").get_attribute("href")  # noqa: E501
@@ -349,7 +349,7 @@ def get_profile_photos(ids):
                 f1 = furl(pvoid_link)
                 int_fb_id = f1.args.popvalue('owner_id')
                 account_id = int_fb_id.strip()
-                f2 = furl(user_id)
+                f2 = furl(userid_profile_link)
                 userid_path = str(f2.path)
                 userid = userid_path.strip('/')
                 back_album_url = "albums/?owner_id="
@@ -387,7 +387,7 @@ def get_profile_photos(ids):
         except TimeoutException:
             print("Photo page timed out")
             e = open("error_log.txt", "a", newline="\n")
-            e.writelines("Timeout error occurred while scrpaing " + user_id)
+            e.writelines("Timeout error occurred while scrpaing " + userid_profile_link)
             e.write("\n")
             e.close()
         except StaleElementReferenceException:
@@ -429,15 +429,16 @@ def friend_walker():
 # *                                Get Friends                               *
 # ****************************************************************************
 # -------------------------------------------------------------
-# DONE: create a variable that is user_id and friends_id combined for images
+# DONE: create a variable that is userid_profile_link and friends_id combined for images
 # DONE: Add a loop with a limitation of redundancy
 
 
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def get_friends(ids):
-    for user_id in ids:
-        driver.get(user_id)
-        print("Getting friends of " + user_id)
+    for userid_profile_link in ids:
+        folder_check(userid_profile_link)
+        driver.get(userid_profile_link)
+        print("Getting friends of " + userid_profile_link)
         try:
             friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
             driver.get(friend_page)
@@ -467,7 +468,8 @@ def get_friends(ids):
 
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def friend_gender_scraper(ids):
-    for user_id in ids:
+    for userid_profile_link in ids:
+        folder_check(userid_profile_link)
         if os.path.exists("friend_urls.txt"):
             with open("friend_urls.txt") as ofile:
                 for line in ofile:
@@ -546,6 +548,7 @@ def scroll():
 # ****************************************************************************
 # *                                   Utils                                  *
 # ****************************************************************************
+# The following functions are deprecated
 
 
 def get_title_links(title):
@@ -664,6 +667,40 @@ def create_folder(folder):
         os.mkdir(folder)
 
 
+# ****************************************************************************
+# *                               Folder Check                               *
+# ****************************************************************************
+
+def folder_check(userid_profile_link):
+    time.sleep(3)
+    print("Checking folders")
+    with open("input.txt") as infile:
+        for line in infile:
+            userid = line
+            print("userid")
+            url_match = facebook_https_prefix + facebook_link_body + userid
+            print(url_match)
+            CWD = os.getcwd()
+            print(CWD)
+            upath = "../" + userid
+            if url_match == userid_profile_link:
+                if CWD == "data/" and os.path.exists(userid):
+                    os.chdir(userid)
+                elif CWD == "data/" and not os.path.exists(userid):
+                    os.mkdir(userid)
+                    os.chdir(userid)
+                elif not CWD == "data/" and os.path.exists(upath):
+                    os.chdir(upath)
+                elif not CWD == "data/" and not os.path.exists(upath):
+                    os.mkdir(upath)
+                    os.chdir(upath)
+                else:
+                    print("path is unset")
+            else:
+                print("The urls do not match")
+                print("You buggered up the code, anoduck")
+
+
 # In[ ]:
 
 
@@ -692,17 +729,17 @@ def scrap_profile(ids):
     os.chdir(folder)
 
     # execute for all profiles given in input.txt file
-    for user_id in ids:
+    for userid_profile_link in ids:
 
         time.sleep(randint(tsmin, tsmax))
-        driver.get(user_id)
+        driver.get(userid_profile_link)
         url = driver.current_url
-        user_id = create_original_link(url)
+        userid_profile_link = create_original_link(url)
         print(url)
-        print("\nScraping:", user_id)
+        print("\nScraping:", userid_profile_link)
 
         try:
-            target_dir = os.path.join(folder, user_id.split("/")[-1])
+            target_dir = os.path.join(folder, userid_profile_link.split("/")[-1])
             create_folder(target_dir)
             os.chdir(target_dir)
         except Exception:
