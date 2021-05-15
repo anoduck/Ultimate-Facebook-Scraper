@@ -33,13 +33,11 @@ import sys
 
 # Custom Imports for time banning.
 import time
-# from urllib.request import urlopen, Request
 from random import randint
 from furl import furl
 
-import utils
 import yaml
-# from ratelimit import limits
+from ratelimit import limits
 from selenium import webdriver
 from selenium.webdriver import Firefox
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
@@ -47,7 +45,6 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 # -------------------------------------------------------------
 # -------------------------------------------------------------
@@ -123,6 +120,22 @@ wait = WebDriverWait(driver, 47)
 # CHROMEDRIVER_BINARIES_FOLDER = "bin"
 Firefox(executable_path="/usr/local/bin/geckodriver")
 
+#########################################
+#     ___           _                   #
+#    | _ ) ___  ___| |___ __ _ _ _      #
+#    | _ \/ _ \/ _ \ / -_) _` | ' \     #
+#    |___/\___/\___/_\___\__,_|_||_|    #
+#                                       #
+#########################################
+
+
+def to_bool(x):
+    if x in ["False", "0", 0, False]:
+        return False
+    elif x in ["True", "1", 1, True]:
+        return True
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected")
 
 # ---------------------------------------------------------
 ###################################################################
@@ -134,6 +147,8 @@ Firefox(executable_path="/usr/local/bin/geckodriver")
 ###################################################################
 # ----------------------------------------------------------
 
+
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def gallery_walker():
     phset = False
     while phset is False:
@@ -172,6 +187,7 @@ def gallery_walker():
 #                                                              #
 ################################################################
 
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def album_walker():
     print("Walking the album")
     alset = False
@@ -256,6 +272,8 @@ def clean_file_sets():
 
 # -------------------------------------------------------------
 
+# -------------------------------------------------------------
+
 ##########################################################################################  # noqa: E501
 #      ____      _                      __ _ _        ____  _           _                #  # noqa: E501
 #     / ___| ___| |_   _ __  _ __ ___  / _(_) | ___  |  _ \| |__   ___ | |_ ___  ___     #  # noqa: E501
@@ -268,7 +286,7 @@ def clean_file_sets():
 # --------------------------------------------------------------
 # DONE: prevent infinite loop of scraping photos.
 
-
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def get_profile_photos(ids):
     time.sleep(randint(tsmin, tsmax))
     for user_id in ids:
@@ -378,6 +396,7 @@ def get_profile_photos(ids):
             print("Fuck!! No Photos Found!")
             clean_file_sets()
 
+
 # ****************************************************************************
 # *                               Friend Walker                              *
 # ****************************************************************************
@@ -414,6 +433,7 @@ def friend_walker():
 # DONE: Add a loop with a limitation of redundancy
 
 
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def get_friends(ids):
     for user_id in ids:
         driver.get(user_id)
@@ -423,14 +443,15 @@ def get_friends(ids):
             driver.get(friend_page)
             print("Getting " + friend_page)
             scroll()
+            time.sleep(5)
             friend_walker()
             friend_list_end = False
             while friend_list_end is False:
                 try:
-                    # more_friends = driver.find_element_by_xpath('//body[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[3]/a[1]').get_attribute('href') # noqa E501
-                    # driver.get(more_friends)
-                    driver.find_element_by_xpath('//span[text()="See More Friends"]').click()  # noqa: E501
+                    more_friends = driver.find_element_by_xpath('//span[text()="See More Friends"]').get_attribute("href")
+                    driver.get(more_friends)
                     scroll()
+                    time.sleep(5)
                     friend_walker()
                 except NoSuchElementException:
                     print("Did not find more friends")
@@ -444,6 +465,7 @@ def get_friends(ids):
 # ****************************************************************************
 
 
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def friend_gender_scraper(ids):
     for user_id in ids:
         if os.path.exists("friend_urls.txt"):
@@ -461,9 +483,9 @@ def friend_gender_scraper(ids):
                             b.writelines(friend_url)
                             b.write("\n")
                             b.close()
-                            with open("friends_to_scrape.txt") as ids:
-                                get_profile_photos(ids)
-                                get_friends(ids)
+                            with open("friends_to_scrape.txt") as fts:
+                                get_profile_photos(fts)
+                                get_friends(fts)
                     except NoSuchElementException:
                         print("No Gender Found")
         else:
@@ -521,6 +543,65 @@ def scroll():
 
     return
 
+# ****************************************************************************
+# *                                   Utils                                  *
+# ****************************************************************************
+
+
+def get_title_links(title):
+    l = title.find_elements_by_tag_name("a")  # noqa: E741
+    return l[-1].text, l[-1].get_attribute("href")
+
+
+def get_title(x, selectors):
+    title = ""
+    try:
+        title = x.find_element_by_xpath(selectors.get("title"))
+    except Exception:
+        try:
+            title = x.find_element_by_xpath(selectors.get("title_exc1"))
+        except Exception:
+            try:
+                title = x.find_element_by_xpath(selectors.get("title_exc2"))
+            except Exception:
+                pass
+    finally:
+        return title
+
+
+def get_time(x):
+    time = ""
+    try:
+        time = x.find_element_by_tag_name("abbr").get_attribute("title")
+        time = (
+            str("%02d" % int(time.split(", ")[1].split()[1]),)
+            + "-"
+            + str(
+                (
+                    "%02d"
+                    % (
+                        int(
+                            (
+                                list(calendar.month_abbr).index(
+                                    time.split(", ")[1].split()[0][:3]
+                                )
+                            )
+                        ),
+                    )
+                )
+            )
+            + "-"
+            + time.split()[3]
+            + " "
+            + str("%02d" % int(time.split()[5].split(":")[0]))
+            + ":"
+            + str(time.split()[5].split(":")[1])
+        )
+    except Exception:
+        pass
+
+    finally:
+        return time
 
 # ## Defining the scraping process
 
@@ -604,10 +685,10 @@ def create_folder(folder):
 # ****************************************************************************
 
 
-# @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def scrap_profile(ids):
     folder = os.path.join(os.getcwd(), "data")
-    utils.create_folder(folder)
+    create_folder(folder)
     os.chdir(folder)
 
     # execute for all profiles given in input.txt file
@@ -622,7 +703,7 @@ def scrap_profile(ids):
 
         try:
             target_dir = os.path.join(folder, user_id.split("/")[-1])
-            utils.create_folder(target_dir)
+            create_folder(target_dir)
             os.chdir(target_dir)
         except Exception:
             print("Some error occurred in creating the profile directory.")
@@ -666,6 +747,7 @@ def safe_find_element_by_id(driver, elem_id):
         return None
 
 
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def login(email, password):
     """ Logging into our own profile """
 
@@ -728,7 +810,7 @@ def login(email, password):
 # -----------------------------------------------------------------------------
 
 
-# @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def scraper(**kwargs):
     with open("credentials.yaml", "r") as ymlfile:
         cfg = yaml.safe_load(stream=ymlfile)
@@ -840,8 +922,8 @@ if __name__ == "__main__":
 # ---------------------------------------------------------
 
 # whether to download photos or not
-download_uploaded_photos = utils.to_bool(args["uploaded_photos"])
-download_friends_photos = utils.to_bool(args["friends_photos"])
+download_uploaded_photos = to_bool(args["uploaded_photos"])
+download_friends_photos = to_bool(args["friends_photos"])
 
 total_scrolls = int(args["total_scrolls"])
 scroll_time = int(args["scroll_time"])

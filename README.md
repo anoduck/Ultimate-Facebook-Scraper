@@ -21,6 +21,8 @@
 
 *This repository is no longer compatible with the original UFS scraper written by harismuneer.*
 
+*And the original repository for UFS created by harismuneer is empty.*
+
 ----
 
 ### New Changes to come
@@ -35,9 +37,16 @@ A bot which scrapes a user's Facebook profile for images:
 
 - all albums
 - profile photos
-- friend's profile photos(WIP)
+- a profile's friends
+- profile photos of friends
+- friend gender filtration
+- Account blocking prevention
 
 ### Notable Changes
+
+#### Guess what? Zuckerberg still hates you.
+
+There is little doubt that the zuckerberg hates anyone who attempts to scrape data from the book of faceness. So, by using this script strictly for educational purposes, you will not recieve a christmas card from the zuckerberg, and there is the potential that you will either be blocked from usage or temporarily suspended for it's use. 
 
 #### Chromedriver is no more
 
@@ -70,9 +79,12 @@ sudo pip3 install -r requirements.txt
 4. Change Directory to the repo you just cloned and copy `input.txt.example` to `scraper/input.txt` and copy `credentials.yml.example` to `scraper/credentials.yml`. Then open up those files making desired changes.
 
 ```bash
-cd to/the/repository/Ultimate-Facebook-Scraper
+cd to/the/repository/UFS-Quackified
+cp input.txt.example scraper/input.txt
+cp credentials.yml.example scraper/credentials.yml
+cd scraper
 nvim input.txt
-# make edits then
+# Add usernames to scrape
 nvim credentials.yml
 # Enter credential information
 ```

@@ -15,7 +15,7 @@
 *** DONE [#B] Find means to mitigate error of no attribute in next page functions.
 *** CANCELED [#B] Rewrite scrap_profile function
   	- [ ] combine this with the scraper_control
-  	- [ ] rearrage flow of script to fully complete one user at a time
+	- [ ] rearrage flow of script to fully complete one user at a time
 *** DONE [#B] create function for album walkthrough to reduce size of code.
   	- [x] create independent function
   	- [x] remove redundancy
@@ -37,6 +37,8 @@
 * TODO Later stage developement
 ** TODO Setup config.py for easier configuration
 ** TODO move from username to userid
+** TODO Correct failed creation of folder hierarchy
+*** TODO link call to ensure folder structure with userid.
 * Docs
   - https://www.scrapingbee.com/blog/web-scraping-without-getting-blocked/
   - https://selenium-python.readthedocs.io/
