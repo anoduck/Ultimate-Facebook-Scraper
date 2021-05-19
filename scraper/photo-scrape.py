@@ -433,7 +433,6 @@ def friend_walker():
 # DONE: Add a loop with a limitation of redundancy
 
 
-@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def get_friends(ids):
     for userid_profile_link in ids:
         folder_check(userid_profile_link)
