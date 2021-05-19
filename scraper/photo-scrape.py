@@ -615,31 +615,36 @@ def create_folder(folder):
 def folder_check(userid_profile_link):
     time.sleep(3)
     print("Checking folders")
-    with open("input.txt") as infile:
-        for line in infile:
-            userid = line
-            print("userid")
-            url_match = facebook_https_prefix + facebook_link_body + userid
-            print(url_match)
-            CWD = os.getcwd()
-            print(CWD)
-            upath = "../" + userid
-            if url_match == userid_profile_link:
-                if CWD == "data/" and os.path.exists(userid):
-                    os.chdir(userid)
-                elif CWD == "data/" and not os.path.exists(userid):
-                    os.mkdir(userid)
-                    os.chdir(userid)
-                elif not CWD == "data/" and os.path.exists(upath):
-                    os.chdir(upath)
-                elif not CWD == "data/" and not os.path.exists(upath):
-                    os.mkdir(upath)
-                    os.chdir(upath)
+    CWD = os.getcwd()
+    print(CWD)
+    if os.path.exists("../../input.txt"):
+        with open("../../input.txt", newline="\n") as infile:
+            for line in infile:
+                userid = line
+                print(userid)
+                url_match = facebook_https_prefix + facebook_link_body + userid
+                print(url_match)
+                upath = "../" + userid
+                if url_match == userid_profile_link:
+                    if CWD == "data/" and os.path.exists(userid):
+                        os.chdir(userid)
+                    elif CWD == "data/" and not os.path.exists(userid):
+                        os.mkdir(userid)
+                        os.chdir(userid)
+                    elif not CWD == "data/" and os.path.exists(upath):
+                        os.chdir(upath)
+                    elif not CWD == "data/" and not os.path.exists(upath):
+                        os.mkdir(upath)
+                        os.chdir(upath)
+                    else:
+                        print("path is unset")
+                        continue
                 else:
-                    print("path is unset")
-            else:
-                print("The urls do not match")
-                print("You buggered up the code, anoduck")
+                    print("The urls do not match")
+                    continue
+    else:
+        print("input.txt does not exist here")
+        pass
 
 
 # In[ ]:
