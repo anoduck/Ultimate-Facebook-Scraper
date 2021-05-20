@@ -20,6 +20,7 @@ passwords.txt
 project.org
 scraper-mobile.py
 scraper.py
+scraper/scraper.py
 
 # Custom additions
 chromedriver*
