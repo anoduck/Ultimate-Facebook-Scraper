@@ -33,8 +33,10 @@ import sys
 
 # Custom Imports for time banning.
 import time
+import linecache
 from random import randint
 from furl import furl
+from selenium.webdriver.remote.errorhandler import ErrorHandler
 
 import yaml
 from ratelimit import limits
@@ -171,6 +173,7 @@ def gallery_walker():
             with open("/tmp/image_url.txt") as rfile:
                 for line in rfile:
                     driver.get(line)
+                    print("Getting  " + line)
                     get_fullphoto()
             if os.path.exists("/tmp/image_url.txt"):
                 print("Cleaning...")
@@ -254,7 +257,7 @@ def clean_file_sets():
     elif os.path.exists("/tmp/image_url.txt"):
         os.remove("/tmp/image_url.txt")
     elif os.path.exists("/tmp/album_image_url.txt"):
-        os.remove("/tmps/album_image_url.txt")
+        os.remove("/tmp/album_image_url.txt")
     else:
         print("Clean")
 
@@ -298,6 +301,13 @@ def get_profile_photos(ids):
         print(render_phrase)
         try:
             photos_url = driver.find_element_by_xpath("//a[text()='Photos']").get_attribute("href")  # noqa: E501
+        except NoSuchElementException:
+            profile_link = driver.find_element_by_xpath(
+                "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
+            driver.get(profile_link)
+            photos_url = driver.find_element_by_xpath(
+                "//a[text()='Photos']").get_attribute("href")
+        try:
             driver.get(photos_url)
             wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//section/a")))
             albums_on_pp = driver.find_elements_by_xpath(
@@ -335,11 +345,6 @@ def get_profile_photos(ids):
                             driver.get(line)
                             print("Opening album  " + line)
                             album_walker()
-                        print("Cleaning...")
-                        if os.path.exists("/tmp/album_url.txt"):
-                            os.remove("/tmp/album_url.txt")
-                        else:
-                            print("The file does not exist")
                 except StaleElementReferenceException:
                     print("Found a stale element in album links")
                 except NoSuchElementException:
@@ -376,11 +381,6 @@ def get_profile_photos(ids):
                                 driver.get(line)
                                 print("Opening album  " + line)
                                 album_walker()
-                        print("Cleaning...")
-                        if os.path.exists("/tmp/album_url.txt"):
-                            os.remove("/tmp/album_url.txt")
-                        else:
-                            print("The file does not exist")
                     except NoSuchElementException:
                         print("No more albums found")
                         clean_file_sets()
@@ -394,6 +394,7 @@ def get_profile_photos(ids):
             print("Found a reference to a stale Element in photo scrape (general error)")
         except NoSuchElementException:
             print("Fuck!! No Photos Found!")
+            PrintException()
             clean_file_sets()
 
 
@@ -440,6 +441,12 @@ def get_friends(ids):
         print("Getting friends of " + userid_profile_link)
         try:
             friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
+        except NoSuchElementException:
+            profile_link = driver.find_element_by_xpath(
+                "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
+            friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
+            driver.get(profile_link)
+        try:
             driver.get(friend_page)
             print("Getting " + friend_page)
             scroll()
@@ -459,6 +466,7 @@ def get_friends(ids):
         except NoSuchElementException:
             print("Did not find any friends")
             friend_list_end = True
+            PrintException()
 
 # ****************************************************************************
 # *                                Get Gender                                *
@@ -613,37 +621,31 @@ def create_folder(folder):
 
 def folder_check(userid_profile_link):
     time.sleep(3)
-    print("Checking folders")
+    print("Checking folders for " + userid_profile_link)
     CWD = os.getcwd()
     print(CWD)
-    if os.path.exists("../../input.txt"):
-        with open("../../input.txt", newline="\n") as infile:
-            for line in infile:
-                userid = line
-                print(userid)
-                url_match = facebook_https_prefix + facebook_link_body + userid
-                print(url_match)
-                upath = "../" + userid
-                if url_match == userid_profile_link:
-                    if CWD == "data/" and os.path.exists(userid):
-                        os.chdir(userid)
-                    elif CWD == "data/" and not os.path.exists(userid):
-                        os.mkdir(userid)
-                        os.chdir(userid)
-                    elif not CWD == "data/" and os.path.exists(upath):
-                        os.chdir(upath)
-                    elif not CWD == "data/" and not os.path.exists(upath):
-                        os.mkdir(upath)
-                        os.chdir(upath)
-                    else:
-                        print("path is unset")
-                        continue
-                else:
-                    print("The urls do not match")
-                    continue
+    fu1 = furl(userid_profile_link)
+    fu2 = str(fu1.path)
+    userid = fu2.strip("/")
+    print("userid = " + userid)
+    prev_dir = "../"
+    pduserid = prev_dir + userid
+    if CWD != userid:
+        os.chdir(prev_dir)
+        if os.path.exists(userid):
+            os.chdir(userid)
+            print("Directory has been changed to: " + userid)
+        elif os.path.exists(pduserid):
+            os.chdir(pduserid)
+            print("Directory has changed to: " + pduserid)
+        else:
+            os.chdir(prev_dir)
+            print("Creating new directory: " + userid)
+            os.mkdir(userid)
+            os.chdir(userid)
+            print("Directory has changed to: " + userid)
     else:
-        print("input.txt does not exist here")
-        pass
+        print("Directory is correctly chosen")
 
 
 # In[ ]:
@@ -765,6 +767,24 @@ def login(email, password):
         print("There is something wrong with logging in.")
         print(sys.exc_info()[0])
         exit(0)
+
+# ## Error Exception
+
+# In[ ]:
+
+# ****************************************************************************
+# *                            Error Exception                               *
+# ****************************************************************************
+
+
+def PrintException():
+    exc_type, exc_obj, tb = sys.exc_info()
+    f = tb.tb_frame
+    lineno = tb.tb_lineno
+    filename = f.f_code.co_filename
+    linecache.checkcache(filename)
+    line = linecache.getline(filename, lineno, f.f_globals)
+    print("EXCEPTION IN ({}, LINE {} '{}'): {}".format(filename, lineno, line.strip(), exc_obj))
 
 # ## CLI Errors
 
