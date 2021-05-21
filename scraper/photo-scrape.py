@@ -122,6 +122,32 @@ wait = WebDriverWait(driver, 47)
 # CHROMEDRIVER_BINARIES_FOLDER = "bin"
 Firefox(executable_path="/usr/local/bin/geckodriver")
 
+# =========================================================================
+
+# ## Error Exception
+
+# In[ ]:
+
+# ****************************************************************************
+# *                            Error Exception                               *
+# ****************************************************************************
+
+
+def PrintException():
+    exc_type, exc_obj, tb = sys.exc_info()
+    f = tb.tb_frame
+    lineno = tb.tb_lineno
+    filename = f.f_code.co_filename
+    linecache.checkcache(filename)
+    line = linecache.getline(filename, lineno, f.f_globals)
+    print("EXCEPTION IN ({}, LINE {} '{}'): {}".format(
+        filename, lineno, line.strip(), exc_obj))
+
+
+# ## Boolean
+
+# In[ ]:
+
 #########################################
 #     ___           _                   #
 #    | _ ) ___  ___| |___ __ _ _ _      #
@@ -174,7 +200,10 @@ def gallery_walker():
                 for line in rfile:
                     driver.get(line)
                     print("Getting  " + line)
-                    get_fullphoto()
+                    try:
+                        get_fullphoto()
+                    except NoSuchElementException:
+                        continue
             if os.path.exists("/tmp/image_url.txt"):
                 print("Cleaning...")
                 os.remove("/tmp/image_url.txt")
@@ -302,11 +331,15 @@ def get_profile_photos(ids):
         try:
             photos_url = driver.find_element_by_xpath("//a[text()='Photos']").get_attribute("href")  # noqa: E501
         except NoSuchElementException:
-            profile_link = driver.find_element_by_xpath(
-                "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
-            driver.get(profile_link)
-            photos_url = driver.find_element_by_xpath(
-                "//a[text()='Photos']").get_attribute("href")
+            try:
+                profile_link = driver.find_element_by_xpath(
+                    "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
+                driver.get(profile_link)
+                photos_url = driver.find_element_by_xpath(
+                    "//a[text()='Photos']").get_attribute("href")
+            except NoSuchElementException:
+                print("No Photo Element Found")
+                continue
         try:
             driver.get(photos_url)
             wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//section/a")))
@@ -396,6 +429,9 @@ def get_profile_photos(ids):
             print("Fuck!! No Photos Found!")
             PrintException()
             clean_file_sets()
+    else:
+        print("Something Really Nasty Just Happened")
+        PrintException()
 
 
 # ****************************************************************************
@@ -768,23 +804,6 @@ def login(email, password):
         print(sys.exc_info()[0])
         exit(0)
 
-# ## Error Exception
-
-# In[ ]:
-
-# ****************************************************************************
-# *                            Error Exception                               *
-# ****************************************************************************
-
-
-def PrintException():
-    exc_type, exc_obj, tb = sys.exc_info()
-    f = tb.tb_frame
-    lineno = tb.tb_lineno
-    filename = f.f_code.co_filename
-    linecache.checkcache(filename)
-    line = linecache.getline(filename, lineno, f.f_globals)
-    print("EXCEPTION IN ({}, LINE {} '{}'): {}".format(filename, lineno, line.strip(), exc_obj))
 
 # ## CLI Errors
 
