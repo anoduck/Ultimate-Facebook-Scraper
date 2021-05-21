@@ -29,18 +29,22 @@
 Since the last update of this repo the developer has removed the script from github and closed the source code. He now requires payment for access to this script. 
 
 #### What this means for the future of this script?
-Unfortunately, the book of face has changed it's design and nearly all of the references that were used to scrape profiles are no longer present, many once important sections have now been completely removed. As far as yours truly is concerned, I only was using this script to scrape pictures. So, as far as profile information was concerned, it was wasted space. So, the future of this script is to be modified to scrape pictures and pictures only. 
+Unfortunately, the book of face has changed it's design and nearly all of the references that were used to scrape profiles are no longer present, many once important sections have now been completely removed. Many things the script once scraped were never used and were completely unneeded. For now the script is primarly focues on scraping a user's images, their friends, and their friend's images. 
+
+### Open for suggested features
+
+If you would like this script to scrape other parts of the profile than images, please fill out a feature request by opening an issue in the issues tab of this repository. The process of scraping other parts of a user's profile is relatively the same as scraping a user's images, so features can be added if desired.
 
 ### Features
 
-A bot which scrapes a user's Facebook profile for images:
+A bot which scrapes a profiles for images:
 
-- all albums
-- profile photos
-- a profile's friends
-- profile photos of friends
-- friend gender filtration
-- Account blocking prevention
+- All user photos
+- All Photo Albums
+- Friends of user
+- filters list of friends by gender
+- scrapes all the photos and photo albums of friends
+- Prevention of getting banned by the book of facey face.
 
 ### Notable Changes
 
