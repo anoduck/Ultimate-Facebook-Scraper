@@ -21,7 +21,11 @@
 
 *This repository is no longer compatible with the original UFS scraper written by harismuneer.*
 
-*And the original repository for UFS created by harismuneer is empty.*
+*The original repository for UFS created by harismuneer is empty and the code is now closed source*
+
+*HarisMuneer still provides access to his source code for payment.*
+
+*We support keeping code Open Source.*
 
 ----
 
@@ -117,7 +121,7 @@ There are a few things that are recommended in order to encourage successful scr
 
 6. Since currently, the script will not exit on being notified that your account has been blocked, do keep an eye on the scraping process from time to time. If ever you are notified that your account has been blocked, exit the script immediately.
 
-### License, Copyright, and Clarification
+### License, Copyright, and ClarificationAnd the original repository for UFS created by harismuneer is empty.
 
 This script was originally written by Haris Muneer and associates, but what remains of the original work is less than ten percent of the original code base, the remaining 90% was written by yours truly. This was done before the license to the code was changed unknowingly from being open source to closed source. The remaining portions of the original code base is from the open source version and not the closed. Being in such state, this repository is free from all and any claims made upon it by the previous authors, and will be placed under the MIT license. 
 

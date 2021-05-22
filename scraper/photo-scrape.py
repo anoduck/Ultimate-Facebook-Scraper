@@ -33,7 +33,7 @@ import sys
 
 # Custom Imports for time banning.
 import time
-import linecache
+import traceback
 from random import randint
 from furl import furl
 from selenium.webdriver.remote.errorhandler import ErrorHandler
@@ -123,27 +123,6 @@ wait = WebDriverWait(driver, 47)
 Firefox(executable_path="/usr/local/bin/geckodriver")
 
 # =========================================================================
-
-# ## Error Exception
-
-# In[ ]:
-
-# ****************************************************************************
-# *                            Error Exception                               *
-# ****************************************************************************
-
-
-def PrintException():
-    sys.exc_type, sys.exc_obj, sys.exc_info
-    tb = sys.exc_info()
-    f = tb.tb_frame
-    lineno = tb.tb_lineno
-    filename = f.f_code.co_filename
-    linecache.checkcache(filename)
-    line = linecache.getline(filename, lineno, f.f_globals)
-    print("EXCEPTION IN ({}, LINE {} '{}'): {}".format(
-        filename, lineno, line.strip(), exc_type, exc_obj))
-
 
 # ## Boolean
 
@@ -366,9 +345,9 @@ def get_profile_photos(ids):
                 continue
         try:
             driver.get(photos_url)
-            wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//section/a")))
-            albums_on_pp = driver.find_elements_by_xpath(
-                "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")
+            pp_element = "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]"
+            wait.until(EC.visibility_of_all_elements_located((By.XPATH, pp_element)))
+            albums_on_pp = driver.find_elements_by_xpath(pp_element)
             if albums_on_pp and albums_on_pp[0].is_displayed():
                 print("Albums on Photo page")
                 internal_albums = True
@@ -376,11 +355,17 @@ def get_profile_photos(ids):
                 print("Albums not found on photos page")
                 internal_albums = False
             pvoid_link = driver.find_element_by_xpath("//div[1]/section/a").get_attribute("href")  # noqa: E501
+            wait.until(EC.visibility_of_all_elements_located(
+                (By.XPATH, "//section/a")))
             photos_view = driver.find_elements_by_xpath("//section/a")
             for j in photos_view:
-                pv_link = j.get_attribute("href")
-                driver.get(pv_link)
-                gallery_walker()
+                try:
+                    pv_link = j.get_attribute("href")
+                    driver.get(pv_link)
+                    gallery_walker()
+                except NoSuchElementException:
+                    print("Got a funky Reference There")
+                    continue
             # Move to albums
             print("Working on albums now")
             if internal_albums is True:
@@ -438,11 +423,11 @@ def get_profile_photos(ids):
             print("Found a reference to a stale Element in photo scrape (general error)")
         except NoSuchElementException:
             print("Fuck!! No Photos Found!")
-            PrintException()
+            print(traceback.format_exc())
             clean_file_sets()
     else:
         print("Something Really Nasty Just Happened")
-        PrintException()
+        print(traceback.format_exc())
 
 
 # ****************************************************************************
@@ -513,7 +498,7 @@ def get_friends(ids):
         except NoSuchElementException:
             print("Did not find any friends")
             friend_list_end = True
-            PrintException()
+            print(traceback.format_exc())
 
 # ****************************************************************************
 # *                                Get Gender                                *
