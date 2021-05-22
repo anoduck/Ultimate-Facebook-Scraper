@@ -134,14 +134,15 @@ Firefox(executable_path="/usr/local/bin/geckodriver")
 
 
 def PrintException():
-    exc_type, exc_obj, tb = sys.exc_info()
+    sys.exc_type, sys.exc_obj, sys.exc_info
+    tb = sys.exc_info()
     f = tb.tb_frame
     lineno = tb.tb_lineno
     filename = f.f_code.co_filename
     linecache.checkcache(filename)
     line = linecache.getline(filename, lineno, f.f_globals)
     print("EXCEPTION IN ({}, LINE {} '{}'): {}".format(
-        filename, lineno, line.strip(), exc_obj))
+        filename, lineno, line.strip(), exc_type, exc_obj))
 
 
 # ## Boolean
@@ -210,6 +211,29 @@ def gallery_walker():
             else:
                 print("The file does not exist")
 
+############################################################################
+#   ___  _ _                       _____       _ _           _             #
+#  / _ \| | |                     /  __ \     | | |         | |            #
+# / /_\ \ | |__  _   _ _ __ ___   | /  \/ ___ | | | ___  ___| |_ ___  _ __ #
+# |  _  | | '_ \| | | | '_ ` _ \  | |    / _ \| | |/ _ \/ __| __/ _ \| '__|#
+# | | | | | |_) | |_| | | | | | | | \__/\ (_) | | |  __/ (__| || (_) | |   #
+# \_| |_/_|_.__/ \__,_|_| |_| |_|  \____/\___/|_|_|\___|\___|\__\___/|_|   #
+#                                                                          #
+############################################################################
+
+def album_collector(photo_albums_links):
+    for b in photo_albums_links:
+        album_link = b.get_attribute("href")
+        print("Opening  " + album_link)
+        k = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
+        k.writelines(album_link)
+        k.write("\n")
+        k.close()
+    with open("/tmp/album_url.txt") as kfile:
+        for line in kfile:
+            driver.get(line)
+            print("Opening album  " + line)
+            album_walker()
 
 ################################################################
 #       _   _ _                __      __    _ _               #
@@ -264,7 +288,8 @@ def album_walker():
 
 
 def get_fullphoto():
-    full_Size_Url = driver.find_element_by_xpath("//a[text()='View Full Size']").get_attribute("href")  # noqa: E501
+    full_Size_Url = driver.find_element_by_xpath(
+        "//a[text()='View Full Size']").get_attribute("href")
     driver.get(full_Size_Url)
     time.sleep(3)
     image_number = str(randint(1, 9999))
@@ -274,7 +299,6 @@ def get_fullphoto():
         with open(image_name, "wb") as f:
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, f)
-
 
 # ****************************************************************************
 # *                              Clean File Sets                             *
@@ -358,30 +382,28 @@ def get_profile_photos(ids):
                 driver.get(pv_link)
                 gallery_walker()
             # Move to albums
+            print("Working on albums now")
             if internal_albums is True:
-                print("Working on albums now")
                 try:
                     driver.get(photos_url)
-                    wait.until(EC.visibility_of_all_elements_located(
-                        (By.XPATH, "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")))
-                    albums_on_pp = driver.find_elements_by_xpath(
-                        "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")
-                    for n in albums_on_pp:
-                        int_album_link = n.get_attribute("href")
-                        print("Opening  " + int_album_link)
-                        w = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")
-                        w.writelines(int_album_link)
-                        w.write("\n")
-                        w.close()
-                    with open("/tmp/album_url.txt") as kfile:
-                        for line in kfile:
-                            driver.get(line)
-                            print("Opening album  " + line)
-                            album_walker()
-                except StaleElementReferenceException:
-                    print("Found a stale element in album links")
+                    see_all_albums = driver.find_element_by_xpath(
+                        "//div[2]/div/div[2]/div[3]/section[2]/a").get_attribute("href")
+                    driver.get(see_all_albums)
+                    photo_albums_links = driver.find_element_by_xpath(
+                        "//li/table/tbody/tr/td/span/a")
+                    album_collector(photo_albums_links)
                 except NoSuchElementException:
-                    print("No more albums found")
+                    try:
+                        driver.get(photos_url)
+                        wait.until(EC.visibility_of_all_elements_located(
+                            (By.XPATH, "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")))
+                        photo_albums_links = driver.find_elements_by_xpath(
+                            "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")
+                        album_collector(photo_albums_links)
+                    except StaleElementReferenceException:
+                        print("Found a stale element in album links")
+                    except NoSuchElementException:
+                        print("No more albums found")
             else:
                 print("Generating albums page...")
                 f1 = furl(pvoid_link)
@@ -402,18 +424,7 @@ def get_profile_photos(ids):
                     try:
                         wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
                         photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
-                        for b in photo_albums_links:
-                            album_link = b.get_attribute("href")
-                            print("Opening  " + album_link)
-                            k = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
-                            k.writelines(album_link)
-                            k.write("\n")
-                            k.close()
-                        with open("/tmp/album_url.txt") as kfile:
-                            for line in kfile:
-                                driver.get(line)
-                                print("Opening album  " + line)
-                                album_walker()
+                        album_collector(photo_albums_links)
                     except NoSuchElementException:
                         print("No more albums found")
                         clean_file_sets()
