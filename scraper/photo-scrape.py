@@ -321,7 +321,7 @@ def clean_file_sets():
 # --------------------------------------------------------------
 # DONE: prevent infinite loop of scraping photos.
 
-@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+# @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def get_profile_photos(ids):
     time.sleep(randint(tsmin, tsmax))
     for userid_profile_link in ids:
@@ -345,7 +345,7 @@ def get_profile_photos(ids):
                 continue
         try:
             driver.get(photos_url)
-            pp_element = "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]"
+            pp_element = "//div/section/ul/li/table/tbody/tr/td/span/a"
             wait.until(EC.visibility_of_all_elements_located((By.XPATH, pp_element)))
             albums_on_pp = driver.find_elements_by_xpath(pp_element)
             if albums_on_pp and albums_on_pp[0].is_displayed():
@@ -354,10 +354,10 @@ def get_profile_photos(ids):
             else:
                 print("Albums not found on photos page")
                 internal_albums = False
-            pvoid_link = driver.find_element_by_xpath("//div[1]/section/a").get_attribute("href")  # noqa: E501
+            pvoid_link = driver.find_element_by_xpath("//div[1]/section/a[text()='See All']").get_attribute("href")  # noqa: E501
             wait.until(EC.visibility_of_all_elements_located(
-                (By.XPATH, "//section/a")))
-            photos_view = driver.find_elements_by_xpath("//section/a")
+                (By.XPATH, "//section/a[text()='See All']")))
+            photos_view = driver.find_elements_by_xpath("//section/a[text()='See All']")
             for j in photos_view:
                 try:
                     pv_link = j.get_attribute("href")
@@ -376,7 +376,7 @@ def get_profile_photos(ids):
                     if see_all_albums.is_displayed():
                         albums_link = see_all_albums.get_attribute("href")
                         driver.get(albums_link)
-                        photo_albums_links = driver.find_element_by_xpath(
+                        photo_albums_links = driver.find_elements_by_xpath(
                             "//li/table/tbody/tr/td/span/a")
                         album_collector(photo_albums_links)
                     else:
