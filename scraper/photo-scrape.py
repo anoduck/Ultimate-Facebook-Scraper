@@ -491,6 +491,16 @@ def get_friends(userid_profile_link):
         friend_list_end = True
         print(traceback.format_exc())
 
+
+# ------------------------------------------------------------------------
+#    ____                _             ____
+#   / ___| ___ _ __   __| | ___ _ __  / ___|  ___ _ __ __ _ _ __   ___ _ __
+#  | |  _ / _ \ '_ \ / _` |/ _ \ '__| \___ \ / __| '__/ _` | '_ \ / _ \ '__|
+#  | |_| |  __/ | | | (_| |  __/ |     ___) | (__| | | (_| | |_) |  __/ |
+#   \____|\___|_| |_|\__,_|\___|_|    |____/ \___|_|  \__,_| .__/ \___|_|
+#                                                          |_|
+# -------------------------------------------------------------------------
+
 # ****************************************************************************
 # *                                Get Gender                                *
 # ****************************************************************************
@@ -523,13 +533,7 @@ def friend_gender_scraper(ids):
                             b.close()
                             with open("friends_to_scrape.txt") as fts:
                                 for userid_profile_link in fts:
-                                    frud = furl(userid_profile_link)
-                                    fruded = str(frud.path)
-                                    friend_id = fruded.strip("/")
-                                    folder = os.path.join(os.getcwd(), friend_id)
-                                    print("Folder Check on: " + folder)
-                                    create_folder(folder)
-                                    os.chdir(folder)
+                                    folder = os.path.join(os.getcwd(), fuid)
                                     try:
                                         target_dir = os.path.join(
                                             folder, userid_profile_link.split("/")[-1])
