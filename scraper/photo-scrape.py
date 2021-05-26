@@ -533,19 +533,18 @@ def friend_gender_scraper(ids):
                             b.close()
                             with open("friends_to_scrape.txt") as fts:
                                 for userid_profile_link in fts:
-                                    folder = os.path.join(os.getcwd(), fuid)
-                                    try:
-                                        target_dir = os.path.join(
-                                            folder, userid_profile_link.split("/")[-1])
-                                        create_folder(target_dir)
-                                        os.chdir(target_dir)
-                                    except Exception:
-                                        print("Some error occurred in creating the profile directory.")
-                                        print(traceback.format_exc())
-                                        continue
+                                    frud = furl(userid_profile_link)
+                                    fruded = str(frud.path)
+                                    friend_id = fruded.strip("/")
+                                    folder = os.path.join(
+                                        os.getcwd(), friend_id)
+                                    create_folder(folder)
+                                    os.chdir(folder)
                                     # Perform the secondary scrape
                                     get_profile_photos(userid_profile_link)
                                     get_friends(userid_profile_link)
+                        else:
+                            continue
                     except NoSuchElementException:
                         print("No Gender Found")
         else:
