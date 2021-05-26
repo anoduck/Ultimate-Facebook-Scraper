@@ -522,9 +522,25 @@ def friend_gender_scraper(ids):
                             b.write("\n")
                             b.close()
                             with open("friends_to_scrape.txt") as fts:
-                                with fts as ids:
-                                    get_profile_photos(ids)
-                                    get_friends(ids)
+                                for userid_profile_link in fts:
+                                    frud = furl(userid_profile_link)
+                                    fruded = str(frud.path)
+                                    friend_id = fruded.strip("/")
+                                    folder = os.path.join(os.getcwd(), friend_id)
+                                    print("Folder Check on: " + folder)
+                                    create_folder(folder)
+                                    os.chdir(folder)
+                                    try:
+                                        target_dir = os.path.join(
+                                            folder, userid_profile_link.split("/")[-1])
+                                        create_folder(target_dir)
+                                        os.chdir(target_dir)
+                                    except Exception:
+                                        print("Some error occurred in creating the profile directory.")
+                                        continue
+                                    # Perform the secondary scrape
+                                    get_profile_photos(userid_profile_link)
+                                    get_friends(userid_profile_link)
                     except NoSuchElementException:
                         print("No Gender Found")
         else:
@@ -643,46 +659,6 @@ def create_original_link(url):
 def create_folder(folder):
     if not os.path.exists(folder):
         os.mkdir(folder)
-
-
-# ****************************************************************************
-# *                               Folder Check                               *
-# ****************************************************************************
-
-'''
-* Highly likely to be completely removed. Frankly, it's just bad code, and in 
-a broken state. --->
-'''
-
-def folder_check(userid_profile_link):
-    time.sleep(3)
-    print("Checking folders for " + userid_profile_link)
-    CWD = os.getcwd()
-    print(CWD)
-    fu1 = furl(userid_profile_link)
-    fu2 = str(fu1.path)
-    userid = fu2.strip("/")
-    fpath = CWD + "/" + userid
-    print(fpath)
-    print("userid = " + userid)
-    prev_dir = "../"
-    pduserid = prev_dir + userid
-    if CWD != userid and CWD == "data":
-        os.chdir(prev_dir)
-        if os.path.exists(userid):
-            os.chdir(userid)
-            print("Directory has been changed to: " + userid)
-        elif os.path.exists(pduserid):
-            os.chdir(pduserid)
-            print("Directory has changed to: " + pduserid)
-        else:
-            os.chdir(prev_dir)
-            print("Creating new directory: " + userid)
-            os.mkdir(userid)
-            os.chdir(userid)
-            print("Directory has changed to: " + userid)
-    else:
-        print("Directory is correctly chosen")
 
 
 # In[ ]:
