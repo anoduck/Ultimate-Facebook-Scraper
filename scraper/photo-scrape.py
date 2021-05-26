@@ -322,115 +322,108 @@ def clean_file_sets():
 # DONE: prevent infinite loop of scraping photos.
 
 # @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
-def get_profile_photos(ids):
-    time.sleep(randint(tsmin, tsmax))
-    for userid_profile_link in ids:
-        folder_check(userid_profile_link)
-        driver.get(userid_profile_link)
-        url = driver.current_url
-        userid_profile_link = create_original_link(url)
-        render_phrase = 'Scraping photos =  ' + str(userid_profile_link)
-        print(render_phrase)
+def get_profile_photos(userid_profile_link):
+    # folder_check(userid_profile_link)
+    driver.get(userid_profile_link)
+    url = driver.current_url
+    userid_profile_link = create_original_link(url)
+    render_phrase = 'Scraping photos =  ' + str(userid_profile_link)
+    print(render_phrase)
+    try:
+        photos_url = driver.find_element_by_xpath("//a[text()='Photos']").get_attribute("href")  # noqa: E501
+    except NoSuchElementException:
         try:
-            photos_url = driver.find_element_by_xpath("//a[text()='Photos']").get_attribute("href")  # noqa: E501
+            profile_link = driver.find_element_by_xpath(
+                "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
+            driver.get(profile_link)
+            photos_url = driver.find_element_by_xpath(
+                "//a[text()='Photos']").get_attribute("href")
         except NoSuchElementException:
+            print("No Photo Element Found")
+    try:
+        driver.get(photos_url)
+        pp_element = "//div/section/ul/li/table/tbody/tr/td/span/a"
+        wait.until(EC.visibility_of_all_elements_located((By.XPATH, pp_element)))
+        albums_on_pp = driver.find_elements_by_xpath(pp_element)
+        if albums_on_pp and albums_on_pp[0].is_displayed():
+            print("Albums on Photo page")
+            internal_albums = True
+        else:
+            print("Albums not found on photos page")
+            internal_albums = False
+        pvoid_link = driver.find_element_by_xpath("//div[1]/section/a[text()='See All']").get_attribute("href")  # noqa: E501
+        wait.until(EC.visibility_of_all_elements_located(
+            (By.XPATH, "//section/a[text()='See All']")))
+        photos_view = driver.find_elements_by_xpath("//section/a[text()='See All']")
+        for j in photos_view:
             try:
-                profile_link = driver.find_element_by_xpath(
-                    "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
-                driver.get(profile_link)
-                photos_url = driver.find_element_by_xpath(
-                    "//a[text()='Photos']").get_attribute("href")
+                pv_link = j.get_attribute("href")
+                driver.get(pv_link)
+                gallery_walker()
             except NoSuchElementException:
-                print("No Photo Element Found")
+                print("Got a funky Reference There")
                 continue
-        try:
-            driver.get(photos_url)
-            pp_element = "//div/section/ul/li/table/tbody/tr/td/span/a"
-            wait.until(EC.visibility_of_all_elements_located((By.XPATH, pp_element)))
-            albums_on_pp = driver.find_elements_by_xpath(pp_element)
-            if albums_on_pp and albums_on_pp[0].is_displayed():
-                print("Albums on Photo page")
-                internal_albums = True
-            else:
-                print("Albums not found on photos page")
-                internal_albums = False
-            pvoid_link = driver.find_element_by_xpath("//div[1]/section/a[text()='See All']").get_attribute("href")  # noqa: E501
-            wait.until(EC.visibility_of_all_elements_located(
-                (By.XPATH, "//section/a[text()='See All']")))
-            photos_view = driver.find_elements_by_xpath("//section/a[text()='See All']")
-            for j in photos_view:
-                try:
-                    pv_link = j.get_attribute("href")
-                    driver.get(pv_link)
-                    gallery_walker()
-                except NoSuchElementException:
-                    print("Got a funky Reference There")
-                    continue
-            # Move to albums
-            print("Working on albums now")
-            if internal_albums is True:
-                try:
+        # Move to albums
+        print("Working on albums now")
+        if internal_albums is True:
+            try:
+                driver.get(photos_url)
+                see_all_albums = driver.find_element_by_xpath(
+                    "//div[2]/div/div[2]/div[3]/section[2]/a")
+                if see_all_albums.is_displayed():
+                    albums_link = see_all_albums.get_attribute("href")
+                    driver.get(albums_link)
+                    photo_albums_links = driver.find_elements_by_xpath(
+                        "//li/table/tbody/tr/td/span/a")
+                    album_collector(photo_albums_links)
+                else:
                     driver.get(photos_url)
-                    see_all_albums = driver.find_element_by_xpath(
-                        "//div[2]/div/div[2]/div[3]/section[2]/a")
-                    if see_all_albums.is_displayed():
-                        albums_link = see_all_albums.get_attribute("href")
-                        driver.get(albums_link)
-                        photo_albums_links = driver.find_elements_by_xpath(
-                            "//li/table/tbody/tr/td/span/a")
-                        album_collector(photo_albums_links)
-                    else:
-                        driver.get(photos_url)
-                        wait.until(EC.visibility_of_all_elements_located(
-                            (By.XPATH, "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")))
-                        photo_albums_links = driver.find_elements_by_xpath(
-                            "//div[2]/div[1]/div[2]/div[2]/section[1]/ul[1]/li/table[1]/tbody[1]/tr[1]/td[1]/span[1]/a[1]")
-                        album_collector(photo_albums_links)
-                except StaleElementReferenceException:
-                    print("Found a stale element in album links")
-                except NoSuchElementException:
-                    print("No more albums found on photo page")
-                    internal_albums = False
-                    return internal_albums
-            else:
-                print("Generating albums page...")
-                f1 = furl(pvoid_link)
-                int_fb_id = f1.args.popvalue('owner_id')
-                account_id = int_fb_id.strip()
-                f2 = furl(userid_profile_link)
-                userid_path = str(f2.path)
-                userid = userid_path.strip('/')
-                back_album_url = "albums/?owner_id="
-                album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
-                print(album_page_url)
-                driver.get(album_page_url)
+                    pial = "//div[2]/div/div[2]/div[2]/section/ul/li/table/tbody/tr/td/span/a"
+                    photo_albums_links = driver.find_elements_by_xpath(pial)
+                    album_collector(photo_albums_links)
+            except StaleElementReferenceException:
+                print("Found a stale element in album links")
+            except NoSuchElementException:
+                print("No more albums found on photo page")
+                print(traceback.format_exc())
+                internal_albums = False
+        else:
+            print("Generating albums page...")
+            f1 = furl(pvoid_link)
+            int_fb_id = f1.args.popvalue('owner_id')
+            account_id = int_fb_id.strip()
+            f2 = furl(userid_profile_link)
+            userid_path = str(f2.path)
+            userid = userid_path.strip('/')
+            back_album_url = "albums/?owner_id="
+            album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
+            print(album_page_url)
+            driver.get(album_page_url)
+            try:
+                no_album_page = driver.find_element_by_xpath("//span[text()='The page you requested was not found.']")
+                if no_album_page and no_album_page.is_displayed():
+                    print("Album page not found")
+            except NoSuchElementException:
                 try:
-                    no_album_page = driver.find_element_by_xpath("//span[text()='The page you requested was not found.']")
-                    if no_album_page and no_album_page.is_displayed():
-                        print("Album page not found")
+                    wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
+                    photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
+                    album_collector(photo_albums_links)
                 except NoSuchElementException:
-                    try:
-                        wait.until(EC.visibility_of_element_located((By.XPATH, "//span/a")))  # noqa: E501
-                        photo_albums_links = driver.find_elements_by_xpath("//span/a")  # noqa: E501
-                        album_collector(photo_albums_links)
-                    except NoSuchElementException:
-                        print("No more albums found")
-                        clean_file_sets()
-        except TimeoutException:
-            print("Photo page timed out")
-            e = open("error_log.txt", "a", newline="\n")
-            e.writelines("Timeout error occurred while scrpaing " + userid_profile_link)
-            e.write("\n")
-            e.close()
-        except StaleElementReferenceException:
-            print("Found a reference to a stale Element in photo scrape (general error)")
-        except NoSuchElementException:
-            print("Fuck!! No Photos Found!")
-            print(traceback.format_exc())
-            clean_file_sets()
-    else:
-        print("Something Really Nasty Just Happened")
+                    print("No more albums found")
+                    clean_file_sets()
+    except TimeoutException:
+        print("Photo page timed out")
+        e = open("error_log.txt", "a", newline="\n")
+        e.writelines("Timeout error occurred while scrpaing " + userid_profile_link)
+        e.write("\n")
+        e.close()
+    except StaleElementReferenceException:
+        print("Found a reference to a stale Element in photo scrape (general error)")
+    except NoSuchElementException:
+        print("Fuck!! No Photos Found!")
         print(traceback.format_exc())
+        clean_file_sets()
+    
 
 
 # ****************************************************************************
@@ -469,39 +462,39 @@ def friend_walker():
 # DONE: Add a loop with a limitation of redundancy
 
 
-def get_friends(ids):
-    for userid_profile_link in ids:
-        folder_check(userid_profile_link)
-        driver.get(userid_profile_link)
-        print("Getting friends of " + userid_profile_link)
-        try:
-            friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
-        except NoSuchElementException:
-            profile_link = driver.find_element_by_xpath(
-                "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
-            friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
-            driver.get(profile_link)
-        try:
-            driver.get(friend_page)
-            print("Getting " + friend_page)
-            scroll()
-            time.sleep(5)
-            friend_walker()
-            friend_list_end = False
-            while friend_list_end is False:
-                try:
-                    more_friends = driver.find_element_by_xpath('//span[text()="See More Friends"]').get_attribute("href")
-                    driver.get(more_friends)
-                    scroll()
-                    time.sleep(5)
-                    friend_walker()
-                except NoSuchElementException:
-                    print("Did not find more friends")
-                    friend_list_end = True
-        except NoSuchElementException:
-            print("Did not find any friends")
-            friend_list_end = True
-            print(traceback.format_exc())
+def get_friends(userid_profile_link):
+    # folder_check(userid_profile_link)
+    driver.get(userid_profile_link)
+    print("Getting friends of " + userid_profile_link)
+    try:
+        friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
+    except NoSuchElementException:
+        profile_link = driver.find_element_by_xpath(
+            "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
+        friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
+        driver.get(profile_link)
+    try:
+        driver.get(friend_page)
+        print("Getting " + friend_page)
+        scroll()
+        time.sleep(5)
+        friend_walker()
+        friend_list_end = False
+        while friend_list_end is False:
+            try:
+                more_friends = driver.find_element_by_xpath(
+                    '//div[2]/div/div[1]/div[3]/a').get_attribute("href")
+                driver.get(more_friends)
+                scroll()
+                time.sleep(5)
+                friend_walker()
+            except NoSuchElementException:
+                print("Did not find more friends")
+                friend_list_end = True
+    except NoSuchElementException:
+        print("Did not find any friends")
+        friend_list_end = True
+        print(traceback.format_exc())
 
 # ****************************************************************************
 # *                                Get Gender                                *
@@ -511,8 +504,14 @@ def get_friends(ids):
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def friend_gender_scraper(ids):
     for userid_profile_link in ids:
-        folder_check(userid_profile_link)
-        if os.path.exists("friend_urls.txt"):
+        fdud = furl(userid_profile_link)
+        fdurl = str(fdud.path)
+        fuid = fdurl.strip("/")
+        print("Profile is: " + fuid)
+        fgCWD = os.getcwd()
+        if os.path.exists(fgCWD + "/" + fuid + "/" + "friend_urls.txt") is True:
+            print("Desired path exists")
+            os.chdir(fuid)
             with open("friend_urls.txt") as ofile:
                 for line in ofile:
                     friend_url = line
@@ -528,12 +527,13 @@ def friend_gender_scraper(ids):
                             b.write("\n")
                             b.close()
                             with open("friends_to_scrape.txt") as fts:
-                                get_profile_photos(fts)
-                                get_friends(fts)
+                                with fts as ids:
+                                    get_profile_photos(ids)
+                                    get_friends(ids)
                     except NoSuchElementException:
                         print("No Gender Found")
         else:
-            print("File does not exist")
+            print("Friend url list does not exist in directory: " + fgCWD + "/" + fuid)
 
 
 # ## Page Scrolls
@@ -654,6 +654,11 @@ def create_folder(folder):
 # *                               Folder Check                               *
 # ****************************************************************************
 
+'''
+* Highly likely to be completely removed. Frankly, it's just bad code, and in 
+a broken state. --->
+'''
+
 def folder_check(userid_profile_link):
     time.sleep(3)
     print("Checking folders for " + userid_profile_link)
@@ -662,10 +667,12 @@ def folder_check(userid_profile_link):
     fu1 = furl(userid_profile_link)
     fu2 = str(fu1.path)
     userid = fu2.strip("/")
+    fpath = CWD + "/" + userid
+    print(fpath)
     print("userid = " + userid)
     prev_dir = "../"
     pduserid = prev_dir + userid
-    if CWD != userid:
+    if CWD != userid and CWD == "data":
         os.chdir(prev_dir)
         if os.path.exists(userid):
             os.chdir(userid)
@@ -728,12 +735,17 @@ def scrap_profile(ids):
             print("Some error occurred in creating the profile directory.")
             continue
 
+        ccwd = os.getcwd()
+        print("Current Working Directory at the beginning of scrape is: " + ccwd)
+        
         # This defines what gets scraped
         # -------------------------------
         clean_file_sets()
-        get_profile_photos(ids)
-        get_friends(ids)
-        friend_gender_scraper(ids)
+        get_profile_photos(userid_profile_link)
+        get_friends(userid_profile_link)
+        os.chdir("../")
+    # The get gender relevant friends
+    friend_gender_scraper(ids)
 
     print("\nProcess Completed.")
     os.chdir("../..")
