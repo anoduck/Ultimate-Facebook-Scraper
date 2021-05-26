@@ -370,23 +370,18 @@ def get_profile_photos(userid_profile_link):
                 driver.get(photos_url)
                 see_all_albums = driver.find_element_by_xpath(
                     "//div[2]/div/div[2]/div[3]/section[2]/a")
-                if see_all_albums.is_displayed():
-                    albums_link = see_all_albums.get_attribute("href")
-                    driver.get(albums_link)
-                    photo_albums_links = driver.find_elements_by_xpath(
-                        "//li/table/tbody/tr/td/span/a")
-                    album_collector(photo_albums_links)
-                else:
-                    driver.get(photos_url)
-                    pial = "//div[2]/div/div[2]/div[2]/section/ul/li/table/tbody/tr/td/span/a"
-                    photo_albums_links = driver.find_elements_by_xpath(pial)
-                    album_collector(photo_albums_links)
+                albums_link = see_all_albums.get_attribute("href")
+                driver.get(albums_link)
+                photo_albums_links = driver.find_elements_by_xpath(
+                    "//li/table/tbody/tr/td/span/a")
+                album_collector(photo_albums_links)
+            except NoSuchElementException:
+                print("'See More Albums' element not found. Scraping directly from photos url:")
+                pial = "//div[2]/div/div[2]/div[2]/section/ul/li/table/tbody/tr/td/span/a"
+                photo_albums_links = driver.find_elements_by_xpath(pial)
+                album_collector(photo_albums_links)
             except StaleElementReferenceException:
                 print("Found a stale element in album links")
-            except NoSuchElementException:
-                print("No more albums found on photo page")
-                print(traceback.format_exc())
-                internal_albums = False
         else:
             print("Generating albums page...")
             f1 = furl(pvoid_link)
