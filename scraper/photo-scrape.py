@@ -541,6 +541,7 @@ def friend_gender_scraper(ids):
                                         os.chdir(target_dir)
                                     except Exception:
                                         print("Some error occurred in creating the profile directory.")
+                                        print(traceback.format_exc())
                                         continue
                                     # Perform the secondary scrape
                                     get_profile_photos(userid_profile_link)
