@@ -113,7 +113,7 @@ rhtime = 900
 tsmin = 15
 tsmax = 30
 
-# For gender scraping | Binary only, either "Male" or "Female"
+# For gender scraping | Binary only, either "Male", "Female", or "All"
 desired_gender = "Female"
 
 # Setup webdriverwait variable
@@ -325,8 +325,8 @@ def clean_file_sets():
 def get_profile_photos(userid_profile_link):
     # folder_check(userid_profile_link)
     driver.get(userid_profile_link)
-    url = driver.current_url
-    userid_profile_link = create_original_link(url)
+    # url = driver.current_url
+    # userid_profile_link = create_original_link(url)
     render_phrase = 'Scraping photos =  ' + str(userid_profile_link)
     print(render_phrase)
     try:
@@ -465,8 +465,8 @@ def get_friends(userid_profile_link):
     except NoSuchElementException:
         profile_link = driver.find_element_by_xpath(
             "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
-        friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
         driver.get(profile_link)
+        friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
     try:
         driver.get(friend_page)
         print("Getting " + friend_page)
@@ -475,16 +475,24 @@ def get_friends(userid_profile_link):
         friend_walker()
         friend_list_end = False
         while friend_list_end is False:
-            try:
+            try: 
                 more_friends = driver.find_element_by_xpath(
                     '//div[2]/div/div[1]/div[3]/a').get_attribute("href")
                 driver.get(more_friends)
                 scroll()
-                time.sleep(5)
+                time.sleep(3)
                 friend_walker()
             except NoSuchElementException:
-                print("Did not find more friends")
-                friend_list_end = True
+                try:
+                    more_friends_again = driver.find_element_by_xpath(
+                        '//div[2]/div/div[1]/div[2]/a').get_attribute("href")
+                    driver.get(more_friends_again)
+                    scroll()
+                    time.sleep(3)
+                    friend_walker()
+                except NoSuchElementException:
+                    print("Did not find more friends")
+                    friend_list_end = True
     except NoSuchElementException:
         print("Did not find any friends")
         friend_list_end = True
@@ -524,31 +532,55 @@ def friend_gender_scraper(ids):
                     friend_url = line
                     driver.get(friend_url)
                     print('Scraping Gender' + str(friend_url))
-                    try:
-                        gender = driver.find_element_by_xpath("//div[2]/div/div[1]/div[6]/div/div/div[1]/table/tbody/tr/td[2]/div").text  # noqa: E501
-                        print(gender)
-                        if gender == desired_gender:
-                            friend_scrape_file = "friends_to_scrape.txt"
-                            b = open(friend_scrape_file, "a", encoding="utf-8", newline="\n")  # noqa: E501
-                            b.writelines(friend_url)
-                            b.write("\n")
-                            b.close()
-                            with open("friends_to_scrape.txt") as fts:
-                                for userid_profile_link in fts:
-                                    frud = furl(userid_profile_link)
-                                    friend_id = frud.pathstr
-                                    folder =  fgCWD + friend_id
-                                    print("Folder to be created: " + folder)
-                                    time.sleep(3)
-                                    create_folder(folder)
-                                    os.chdir(folder)
-                                    # Perform the secondary scrape
-                                    get_profile_photos(userid_profile_link)
-                                    get_friends(userid_profile_link)
-                        else:
+                    if desired_gender == "Female":
+                        try:
+                            sheila = driver.find_element_by_xpath(
+                                "//div[text()='Female']")
+                            if sheila and sheila.is_displayed():
+                                friend_scrape_file = "friends_to_scrape.txt"
+                                b = open(friend_scrape_file, "a", encoding="utf-8", newline="\n")  # noqa: E501
+                                b.writelines(friend_url)
+                                b.write("\n")
+                                b.close()
+                        except NoSuchElementException:
                             continue
-                    except NoSuchElementException:
-                        print("No Gender Found")
+                    elif desired_gender == "Male":
+                        try:
+                            bruce = driver.find_element_by_xpath(
+                                "//div[text()='Male']")
+                            if bruce and bruce.is_displayed():
+                                friend_scrape_file = "friends_to_scrape.txt"
+                                b = open(friend_scrape_file, "a", encoding="utf-8", newline="\n")  # noqa: E501
+                                b.writelines(friend_url)
+                                b.write("\n")
+                                b.close()
+                        except NoSuchElementException:
+                            continue
+                    elif desired_gender == "All":
+                        friend_scrape_file = "friends_to_scrape.txt"
+                        b = open(friend_scrape_file, "a", encoding="utf-8", newline="\n")  # noqa: E501
+                        b.writelines(friend_url)
+                        b.write("\n")
+                        b.close()
+                    else:
+                        print("Unable to determine desired gender")
+                        print(traceback.format_exc())
+                    # Now Scrape Results
+                    print("Scraping Friends of gender: " + desired_gender)
+                    with open("friends_to_scrape.txt") as fts:
+                        for userid_profile_link in fts:
+                            frud = furl(userid_profile_link)
+                            friend_id = frud.pathstr
+                            CWD = os.getcwd()
+                            folder = CWD + friend_id
+                            print("Folder to be created: " + folder)
+                            time.sleep(3)
+                            create_folder(folder)
+                            os.chdir(folder)
+                            # Perform the secondary scrape
+                            time.sleep(2)
+                            get_profile_photos(userid_profile_link)
+                            get_friends(userid_profile_link)
         else:
             print("Friend url list does not exist in directory: " + fgCWD + fuid)
 
