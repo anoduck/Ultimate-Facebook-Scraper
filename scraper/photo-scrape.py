@@ -388,8 +388,7 @@ def get_profile_photos(userid_profile_link):
             int_fb_id = f1.args.popvalue('owner_id')
             account_id = int_fb_id.strip()
             f2 = furl(userid_profile_link)
-            userid_path = str(f2.path)
-            userid = userid_path.strip('/')
+            userid = f2.pathstr.strip("/")
             back_album_url = "albums/?owner_id="
             album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
             print(album_page_url)
@@ -506,17 +505,20 @@ def get_friends(userid_profile_link):
 # ****************************************************************************
 
 
-@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def friend_gender_scraper(ids):
     for userid_profile_link in ids:
         fdud = furl(userid_profile_link)
-        fdurl = str(fdud.path)
-        fuid = fdurl.strip("/")
+        dud = fdud.pathstr
+        print("Bad id reference: " + dud)
+        fuid = dud.strip("%0A")
+        print("Good id reference: " + fuid)
+        time.sleep(2)
         print("Profile is: " + fuid)
         fgCWD = os.getcwd()
-        if os.path.exists(fgCWD + "/" + fuid + "/" + "friend_urls.txt") is True:
+        fupath = fgCWD + fuid
+        if os.path.exists(fgCWD + fuid + "/" + "friend_urls.txt") is True:
             print("Desired path exists")
-            os.chdir(fuid)
+            os.chdir(fupath)
             with open("friend_urls.txt") as ofile:
                 for line in ofile:
                     friend_url = line
@@ -534,10 +536,10 @@ def friend_gender_scraper(ids):
                             with open("friends_to_scrape.txt") as fts:
                                 for userid_profile_link in fts:
                                     frud = furl(userid_profile_link)
-                                    fruded = str(frud.path)
-                                    friend_id = fruded.strip("/")
-                                    folder = os.path.join(
-                                        os.getcwd(), friend_id)
+                                    friend_id = frud.pathstr
+                                    folder =  fgCWD + friend_id
+                                    print("Folder to be created: " + folder)
+                                    time.sleep(3)
                                     create_folder(folder)
                                     os.chdir(folder)
                                     # Perform the secondary scrape
@@ -548,7 +550,7 @@ def friend_gender_scraper(ids):
                     except NoSuchElementException:
                         print("No Gender Found")
         else:
-            print("Friend url list does not exist in directory: " + fgCWD + "/" + fuid)
+            print("Friend url list does not exist in directory: " + fgCWD + fuid)
 
 
 # ## Page Scrolls
