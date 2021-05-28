@@ -175,13 +175,15 @@ def retry_on_timeout(exception):
 
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def gallery_walker():
+    list_number = str(randint(1, 99999))
+    image_file = "/tmp/image_url" + list_number + ".txt"
     phset = False
     while phset is False:
         wait.until(EC.visibility_of_all_elements_located((By.XPATH, "//td/div/a")))
         photos_links = driver.find_elements_by_xpath("//td/div/a")  # noqa: E501
         for i in photos_links:
             image_link = i.get_attribute("href")
-            q = open("/tmp/image_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
+            q = open(image_file, "a", encoding="utf-8", newline="\n")  # noqa: E501
             q.writelines(image_link)
             q.write("\n")
             q.close()
@@ -193,7 +195,7 @@ def gallery_walker():
             print("reached end of set")
             phset = True
             print("Downing scraped photos")
-            with open("/tmp/image_url.txt") as rfile:
+            with open(image_file) as rfile:
                 for line in rfile:
                     driver.get(line)
                     print("Getting  " + line)
@@ -201,9 +203,9 @@ def gallery_walker():
                         get_fullphoto()
                     except NoSuchElementException:
                         continue
-            if os.path.exists("/tmp/image_url.txt"):
+            if os.path.exists(image_file):
                 print("Cleaning...")
-                os.remove("/tmp/image_url.txt")
+                os.remove(image_file)
             else:
                 print("The file does not exist")
 
@@ -218,14 +220,16 @@ def gallery_walker():
 ############################################################################
 
 def album_collector(photo_albums_links):
+    alurl_num = str(randint(1, 9999))
+    alurl_file = "/tmp/album_url" + alurl_num + ".txt"
     for b in photo_albums_links:
         album_link = b.get_attribute("href")
         print("Opening  " + album_link)
-        k = open("/tmp/album_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
+        k = open(alurl_file, "a", encoding="utf-8", newline="\n")  # noqa: E501
         k.writelines(album_link)
         k.write("\n")
         k.close()
-    with open("/tmp/album_url.txt") as kfile:
+    with open(alurl_file) as kfile:
         for line in kfile:
             driver.get(line)
             print("Opening album  " + line)
@@ -242,13 +246,15 @@ def album_collector(photo_albums_links):
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def album_walker():
     print("Walking the album")
+    album_number = str(randint(1, 9999))
+    album_file = "/tmp/album_image_url" + album_number + ".txt"
     alset = False
     while alset is False:
         album_photos_links = driver.find_elements_by_xpath("//article/div/section/div/a")  # noqa: E501
         print("Writing Image links...")
         for s in album_photos_links:
             album_image_link = s.get_attribute("href")
-            v = open("/tmp/album_image_url.txt", "a", encoding="utf-8", newline="\n")  # noqa: E501
+            v = open(album_file, "a", encoding="utf-8", newline="\n")  # noqa: E501
             v.writelines(album_image_link)
             v.write("\n")
             v.close()
@@ -258,7 +264,7 @@ def album_walker():
             print("Trying next page in album...")
         except NoSuchElementException:
             print("Downing scraped photos")
-            with open("/tmp/album_image_url.txt") as ai_file:
+            with open(album_file) as ai_file:
                 for line in ai_file:
                     driver.get(line)
                     print("Getting  " + line)
@@ -266,8 +272,8 @@ def album_walker():
             alset = True
     if alset is True:
         print("Cleaning...")
-        if os.path.exists("/tmp/album_image_url.txt"):
-            os.remove("/tmp/album_image_url.txt")
+        if os.path.exists(album_file):
+            os.remove(album_file)
         else:
             print("The file does not exist")
 
@@ -303,7 +309,7 @@ def get_fullphoto():
 def clean_file_sets():
     if os.path.exists("/tmp/album_url.txt"):
         os.remove("/tmp/album_url.txt")
-    elif os.path.exists("/tmp/image_url.txt"):
+    elif os.path.exists("/tmp/image_url"+ '*' + ".txt"):
         os.remove("/tmp/image_url.txt")
     elif os.path.exists("/tmp/album_image_url.txt"):
         os.remove("/tmp/album_image_url.txt")
@@ -450,9 +456,6 @@ def friend_walker():
     for x in friend_list:
         friend_url = x.get_attribute("href")
         friend_name = x.text
-        fr1 = furl(friend_url)
-        frid = fr1.pathstr.strip("/")
-        print("Got " + f_id + " friend " + frid)
         friend_file = f_id + "-" + "friends" + ".txt"
         u = open(friend_file, "a", encoding="utf-8", newline="\n")
         u.writelines(friend_name)
@@ -607,7 +610,7 @@ def friend_gender_scraper(ids):
                         for userid_profile_link in fts:
                             frud = furl(userid_profile_link)
                             frud_id = frud.pathstr
-                            folder = frud_id.strip("%0A")
+                            friend_id = frud_id.strip("%0A")
                             CWD = os.getcwd()
                             folder = CWD + friend_id
                             if os.path.exists(folder):
