@@ -43,7 +43,7 @@ import yaml
 from ratelimit import limits
 from selenium import webdriver
 from selenium.webdriver import Firefox
-from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import ErrorInResponseException, TimeoutException, NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -146,7 +146,7 @@ def to_bool(x):
     else:
         raise argparse.ArgumentTypeError("Boolean value expected")
 
-# -----------------------------------
+# ----------------------------------------------------------------
 # ______     _
 # | ___ \   | |
 # | |_/ /___| |_ _ __ _   _
@@ -155,12 +155,14 @@ def to_bool(x):
 # \_| \_\___|\__|_|   \__, |
 #                      __/ |
 #                     |___/
-# -----------------------------------
+# -----------------------------------------------------------------
 
 def retry_on_timeout(exception):
     """ Return True if exception is Timeout """
     return isinstance(exception, TimeoutException)
     
+def retry_response(exception):
+    return isinstance(exception, ErrorInResponseException)
 
 # ---------------------------------------------------------
 ###################################################################
@@ -172,7 +174,7 @@ def retry_on_timeout(exception):
 ###################################################################
 # ----------------------------------------------------------
 
-
+@retry(retry_on_exception=retry_response, stop_max_attempt_number=5)
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def gallery_walker():
     list_number = str(randint(1, 99999))
@@ -208,6 +210,9 @@ def gallery_walker():
                 os.remove(image_file)
             else:
                 print("The file does not exist")
+        except ErrorInResponseException:
+            traceback.print_exception
+
 
 ############################################################################
 #   ___  _ _                       _____       _ _           _             #
@@ -344,7 +349,7 @@ def clean_file_sets():
 # --------------------------------------------------------------
 # DONE: prevent infinite loop of scraping photos.
 
-# @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 @retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=5)
 def get_profile_photos(userid_profile_link):
     driver.get(userid_profile_link)
@@ -487,6 +492,7 @@ def friend_walker():
 # DONE: create a variable that is userid_profile_link and friends_id combined for images
 # DONE: Add a loop with a limitation of redundancy
 
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 @retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=5)
 def get_friends(userid_profile_link):
     driver.get(userid_profile_link)
@@ -550,7 +556,7 @@ def get_friends(userid_profile_link):
 # *                                Get Gender                                *
 # ****************************************************************************
 
-
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def friend_gender_scraper(ids):
     for userid_profile_link in ids:
         fdud = furl(userid_profile_link)
