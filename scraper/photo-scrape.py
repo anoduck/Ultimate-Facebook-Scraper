@@ -35,6 +35,7 @@ import sys
 import time
 import traceback
 from random import randint
+from retrying import retry
 from furl import furl
 from selenium.webdriver.remote.errorhandler import ErrorHandler
 
@@ -144,6 +145,22 @@ def to_bool(x):
         return True
     else:
         raise argparse.ArgumentTypeError("Boolean value expected")
+
+# -----------------------------------
+# ______     _
+# | ___ \   | |
+# | |_/ /___| |_ _ __ _   _
+# |    // _ \ __| '__| | | |
+# | |\ \  __/ |_| |  | |_| |
+# \_| \_\___|\__|_|   \__, |
+#                      __/ |
+#                     |___/
+# -----------------------------------
+
+def retry_on_timeout(exception):
+    """ Return True if exception is Timeout """
+    return isinstance(exception, TimeoutException)
+    
 
 # ---------------------------------------------------------
 ###################################################################
@@ -322,11 +339,11 @@ def clean_file_sets():
 # DONE: prevent infinite loop of scraping photos.
 
 # @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+@retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=5)
 def get_profile_photos(userid_profile_link):
-    # folder_check(userid_profile_link)
     driver.get(userid_profile_link)
-    # url = driver.current_url
-    # userid_profile_link = create_original_link(url)
+    url = driver.current_url
+    userid_profile_link = create_original_link(url)
     render_phrase = 'Scraping photos =  ' + str(userid_profile_link)
     print(render_phrase)
     try:
@@ -428,13 +445,15 @@ def get_profile_photos(userid_profile_link):
 def friend_walker():
     fi_url = driver.current_url
     ff = furl(fi_url)
-    f_idl = str(ff.path)
-    f_id = f_idl.strip("/friends")
+    f_id = ff.pathstr.strip("/friends")
     friend_list = driver.find_elements_by_xpath("//div[2]/div/div/div[2]/div/table/tbody/tr/td[2]/a")  # noqa: E501
     for x in friend_list:
         friend_url = x.get_attribute("href")
         friend_name = x.text
-        friend_file = f_id + "friends" + ".txt"
+        fr1 = furl(friend_url)
+        frid = fr1.pathstr.strip("/")
+        print("Got " + f_id + " friend " + frid)
+        friend_file = f_id + "-" + "friends" + ".txt"
         u = open(friend_file, "a", encoding="utf-8", newline="\n")
         u.writelines(friend_name)
         u.write("\t")
@@ -447,6 +466,16 @@ def friend_walker():
         k.write("\n")
         k.close()
 
+
+# ------------------------------------------------------
+#  _____      _    ______    _                _
+# |  __ \    | |   |  ___|  (_)              | |
+# | |  \/ ___| |_  | |_ _ __ _  ___ _ __   __| |___
+# | | __ / _ \ __| |  _| '__| |/ _ \ '_ \ / _` / __|
+# | |_\ \  __/ |_  | | | |  | |  __/ | | | (_| \__ \
+#  \____/\___|\__| \_| |_|  |_|\___|_| |_|\__,_|___/
+# -------------------------------------------------------
+
 # -------------------------------------------------------------
 # ****************************************************************************
 # *                                Get Friends                               *
@@ -455,16 +484,18 @@ def friend_walker():
 # DONE: create a variable that is userid_profile_link and friends_id combined for images
 # DONE: Add a loop with a limitation of redundancy
 
-
+@retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=5)
 def get_friends(userid_profile_link):
-    # folder_check(userid_profile_link)
     driver.get(userid_profile_link)
+    url = driver.current_url
+    userid_profile_link = create_original_link(url)
     print("Getting friends of " + userid_profile_link)
     try:
         friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
     except NoSuchElementException:
-        profile_link = driver.find_element_by_xpath(
+        url = driver.find_element_by_xpath(
             "//div[2]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/div[1]/a[1]").get_attribute("href")
+        profile_link = create_original_link(url)
         driver.get(profile_link)
         friend_page = driver.find_element_by_xpath("//div[2]/div/div/div/div[4]/a[2]").get_attribute("href")  # noqa: E501
     try:
@@ -491,7 +522,11 @@ def get_friends(userid_profile_link):
                     time.sleep(3)
                     friend_walker()
                 except NoSuchElementException:
-                    print("Did not find more friends")
+                    scroll()
+                    time.sleep(3)
+                    friend_walker()
+                    time.sleep(5)
+                    print("Friend Scraping: Completed!")
                     friend_list_end = True
     except NoSuchElementException:
         print("Did not find any friends")
@@ -529,7 +564,8 @@ def friend_gender_scraper(ids):
             os.chdir(fupath)
             with open("friend_urls.txt") as ofile:
                 for line in ofile:
-                    friend_url = line
+                    url = line
+                    friend_url = create_original_link(url)
                     driver.get(friend_url)
                     print('Scraping Gender' + str(friend_url))
                     if desired_gender == "Female":
@@ -573,14 +609,18 @@ def friend_gender_scraper(ids):
                             friend_id = frud.pathstr
                             CWD = os.getcwd()
                             folder = CWD + friend_id
-                            print("Folder to be created: " + folder)
-                            time.sleep(3)
-                            create_folder(folder)
-                            os.chdir(folder)
-                            # Perform the secondary scrape
-                            time.sleep(2)
-                            get_profile_photos(userid_profile_link)
-                            get_friends(userid_profile_link)
+                            if os.path.exists(folder):
+                                print("Folder already exists")
+                                continue
+                            else:
+                                print("Folder to be created: " + folder)
+                                time.sleep(3)
+                                create_folder(folder)
+                                os.chdir(folder)
+                                # Perform the secondary scrape
+                                time.sleep(2)
+                                get_profile_photos(userid_profile_link)
+                                get_friends(userid_profile_link)
         else:
             print("Friend url list does not exist in directory: " + fgCWD + fuid)
 
