@@ -606,7 +606,8 @@ def friend_gender_scraper(ids):
                     with open("friends_to_scrape.txt") as fts:
                         for userid_profile_link in fts:
                             frud = furl(userid_profile_link)
-                            friend_id = frud.pathstr
+                            frud_id = frud.pathstr
+                            folder = frud_id.strip("%0A")
                             CWD = os.getcwd()
                             folder = CWD + friend_id
                             if os.path.exists(folder):
@@ -618,6 +619,8 @@ def friend_gender_scraper(ids):
                                 create_folder(folder)
                                 os.chdir(folder)
                                 # Perform the secondary scrape
+                                print("Now performing scraping of second level...")
+                                print("Scraping  " + userid_profile_link)
                                 time.sleep(2)
                                 get_profile_photos(userid_profile_link)
                                 get_friends(userid_profile_link)
