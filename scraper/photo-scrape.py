@@ -39,6 +39,11 @@ from retrying import retry
 from furl import furl
 from selenium.webdriver.remote.errorhandler import ErrorHandler
 
+# For Social Analyzer
+from importlib import import_module
+SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer(silent=True)
+
+# For webdriver and friends
 import yaml
 from ratelimit import limits
 from selenium import webdriver
@@ -541,7 +546,29 @@ def get_friends(userid_profile_link):
         print("Did not find any friends")
         friend_list_end = True
         print(traceback.format_exc())
+    except TimeoutException:
+        print("A Timeout has occurred, we will retry again.")
 
+
+# ------------------------------------------------------------------------------------------
+#   ___              _                 _____            _       _   _     _       _
+#  / _ \            | |               /  ___|          (_)     | | | |   (_)     | |
+# / /_\ \_ __   __ _| |_   _ _______  \ `--.  ___   ___ _  __ _| | | |    _ _ __ | | _____
+# |  _  | '_ \ / _` | | | | |_  / _ \  `--. \/ _ \ / __| |/ _` | | | |   | | '_ \| |/ / __|
+# | | | | | | | (_| | | |_| |/ /  __/ /\__/ / (_) | (__| | (_| | | | |___| | | | |   <\__ \
+# \_| |_/_| |_|\__,_|_|\__, /___\___| \____/ \___/ \___|_|\__,_|_| \_____/_|_| |_|_|\_\___/
+#                       __/ |
+#                      |___/
+# ------------------------------------------------------------------------------------------
+
+def more_social(friend_id):
+    results = SocialAnalyzer.run_as_object(username=friend_id, silent=True)
+    as_file = friend_id + "_social_analytics.txt"
+    safile = open(as_file, "a", encoding="utf-8", newline="\n")
+    safile.writelines(results)
+    safile.write("\n")
+    safile.close()
+    
 
 # ------------------------------------------------------------------------
 #    ____                _             ____
