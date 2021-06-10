@@ -40,8 +40,8 @@ from furl import furl
 from selenium.webdriver.remote.errorhandler import ErrorHandler
 
 # For Social Analyzer
-from importlib import import_module
-SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer(silent=True)
+# from importlib import import_module
+# SocialAnalyzer = import_module("social-analyzer").SocialAnalyzer(silent=True)
 
 # For webdriver and friends
 import yaml
@@ -298,7 +298,7 @@ def album_walker():
 ###############################################################
 # ---------------------------------------------------------
 
-
+@retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=5)
 def get_fullphoto():
     full_Size_Url = driver.find_element_by_xpath(
         "//a[text()='View Full Size']").get_attribute("href")
@@ -307,10 +307,13 @@ def get_fullphoto():
     image_number = str(randint(1, 9999))
     image_name = "photo" + image_number + ".jpg"
     img_url = driver.current_url
-    with requests.get(img_url, stream=True, allow_redirects=True) as r:  # noqa: E501
-        with open(image_name, "wb") as f:
-            r.raw.decode_content = True
-            shutil.copyfileobj(r.raw, f)
+    try:
+        with requests.get(img_url, stream=True, allow_redirects=True) as r:  # noqa: E501
+            with open(image_name, "wb") as f:
+                r.raw.decode_content = True
+                shutil.copyfileobj(r.raw, f)
+    except TimeoutException:
+        print("Timeout Occurred")
 
 # ****************************************************************************
 # *                              Clean File Sets                             *
@@ -561,13 +564,13 @@ def get_friends(userid_profile_link):
 #                      |___/
 # ------------------------------------------------------------------------------------------
 
-def more_social(friend_id):
-    results = SocialAnalyzer.run_as_object(username=friend_id, silent=True)
-    as_file = friend_id + "_social_analytics.txt"
-    safile = open(as_file, "a", encoding="utf-8", newline="\n")
-    safile.writelines(results)
-    safile.write("\n")
-    safile.close()
+# def more_social(friend_id):
+#     results = SocialAnalyzer.run_as_object(username=friend_id, silent=True)
+#     as_file = friend_id + "_social_analytics.txt"
+#     safile = open(as_file, "a", encoding="utf-8", newline="\n")
+#     safile.writelines(results)
+#     safile.write("\n")
+#     safile.close()
     
 
 # ------------------------------------------------------------------------
