@@ -166,6 +166,9 @@ def retry_on_timeout(exception):
     """ Return True if exception is Timeout """
     return isinstance(exception, TimeoutException)
     
+def retry_on_NoSuchElement(exception):
+    return isinstance(exception, NoSuchElementException)
+    
 def retry_response(exception):
     return isinstance(exception, ErrorInResponseException)
 
@@ -358,7 +361,8 @@ def clean_file_sets():
 # DONE: prevent infinite loop of scraping photos.
 
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
-@retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=5)
+@retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=7)
+@retry(retry_on_exception=retry_on_NoSuchElement, stop_max_attempt_number=3)
 def get_profile_photos(userid_profile_link):
     driver.get(userid_profile_link)
     url = driver.current_url
