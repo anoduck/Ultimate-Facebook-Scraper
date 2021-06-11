@@ -232,6 +232,9 @@ def gallery_walker():
 #                                                                          #
 ############################################################################
 
+@retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=7)
+@retry(retry_on_exception=retry_on_NoSuchElement, stop_max_attempt_number=3)
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def album_collector(photo_albums_links):
     alurl_num = str(randint(1, 9999))
     alurl_file = "/tmp/album_url" + alurl_num + ".txt"
@@ -244,7 +247,8 @@ def album_collector(photo_albums_links):
         k.close()
     with open(alurl_file) as kfile:
         for line in kfile:
-            driver.get(line)
+            driver.get(line) //article/div/div/div/a
+
             print("Opening album  " + line)
             album_walker()
 
@@ -256,6 +260,9 @@ def album_collector(photo_albums_links):
 #                                                              #
 ################################################################
 
+
+@retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=7)
+@retry(retry_on_exception=retry_on_NoSuchElement, stop_max_attempt_number=3)
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def album_walker():
     print("Walking the album")
@@ -336,7 +343,8 @@ def clean_file_sets():
 # ---------------------------------------------------------
 
 # #### Identifying images notes:
-#
+# //article/div/div/div/a
+
 # Script needs to do the following in order:
 # 1. Locate the image link on the profile page or open it automatically
 # 2. Walk through and return all images found
