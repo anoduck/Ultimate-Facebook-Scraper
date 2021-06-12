@@ -209,15 +209,13 @@ def gallery_walker():
                 for line in rfile:
                     driver.get(line)
                     print("Getting  " + line)
-                    try:
-                        get_fullphoto()
-                    except NoSuchElementException:
-                        continue
-            if os.path.exists(image_file):
-                print("Cleaning...")
-                os.remove(image_file)
-            else:
-                print("The file does not exist")
+                    get_fullphoto()
+                else:
+                    if os.path.exists(image_file):
+                        print("Cleaning...")
+                        os.remove(image_file)
+                    else:
+                        print("The file does not exist")
         except ErrorInResponseException:
             traceback.print_exception
 
@@ -308,21 +306,26 @@ def album_walker():
 # ---------------------------------------------------------
 
 @retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=5)
+@retry(retry_on_exception=retry_on_NoSuchElement, stop_max_attempt_number=3)
+@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def get_fullphoto():
-    full_Size_Url = driver.find_element_by_xpath(
-        "//a[text()='View Full Size']").get_attribute("href")
-    driver.get(full_Size_Url)
-    time.sleep(3)
-    image_number = str(randint(1, 9999))
-    image_name = "photo" + image_number + ".jpg"
-    img_url = driver.current_url
     try:
-        with requests.get(img_url, stream=True, allow_redirects=True) as r:  # noqa: E501
-            with open(image_name, "wb") as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
-    except TimeoutException:
-        print("Timeout Occurred")
+        full_Size_Url = driver.find_element_by_xpath(
+            "//a[text()='View Full Size']").get_attribute("href")
+        driver.get(full_Size_Url)
+        time.sleep(3)
+        image_number = str(randint(1, 9999))
+        image_name = "photo" + image_number + ".jpg"
+        img_url = driver.current_url
+        try:
+            with requests.get(img_url, stream=True, allow_redirects=True) as r:  # noqa: E501
+                with open(image_name, "wb") as f:
+                    r.raw.decode_content = True
+                    shutil.copyfileobj(r.raw, f)
+        except TimeoutException:
+            print("Timeout Occurred")
+    except NoSuchElementException:
+        print("No full size url element found")
 
 # ****************************************************************************
 # *                              Clean File Sets                             *
