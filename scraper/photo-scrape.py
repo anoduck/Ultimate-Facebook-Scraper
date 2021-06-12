@@ -247,8 +247,7 @@ def album_collector(photo_albums_links):
         k.close()
     with open(alurl_file) as kfile:
         for line in kfile:
-            driver.get(line) //article/div/div/div/a
-
+            driver.get(line)
             print("Opening album  " + line)
             album_walker()
 
