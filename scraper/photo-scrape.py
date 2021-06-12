@@ -183,6 +183,8 @@ def retry_response(exception):
 # ----------------------------------------------------------
 
 @retry(retry_on_exception=retry_response, stop_max_attempt_number=5)
+@retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=7)
+@retry(retry_on_exception=retry_on_NoSuchElement, stop_max_attempt_number=3)
 @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def gallery_walker():
     list_number = str(randint(1, 99999))
@@ -260,7 +262,7 @@ def album_collector(photo_albums_links):
 
 @retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=7)
 @retry(retry_on_exception=retry_on_NoSuchElement, stop_max_attempt_number=3)
-@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+# @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def album_walker():
     print("Walking the album")
     album_number = str(randint(1, 9999))
@@ -286,7 +288,8 @@ def album_walker():
                     driver.get(line)
                     print("Getting  " + line)
                     get_fullphoto()
-            alset = True
+                else:
+                    alset = True
     if alset is True:
         print("Cleaning...")
         if os.path.exists(album_file):
@@ -307,7 +310,7 @@ def album_walker():
 
 @retry(retry_on_exception=retry_on_timeout, stop_max_attempt_number=5)
 @retry(retry_on_exception=retry_on_NoSuchElement, stop_max_attempt_number=3)
-@limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
+# @limits(calls=randint(rtqlow, rtqhigh), period=randint(rltime, rhtime))
 def get_fullphoto():
     try:
         full_Size_Url = driver.find_element_by_xpath(
