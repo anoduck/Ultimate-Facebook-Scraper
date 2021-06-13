@@ -31,6 +31,9 @@ import os
 import platform
 import sys
 
+#For pathlib
+from pathlib import *
+
 # Custom Imports for time banning.
 import time
 import traceback
@@ -203,6 +206,8 @@ def gallery_walker():
             gallery_set = driver.find_element_by_xpath("//table/tbody/tr/td/div/span/div/a").get_attribute("href")  # noqa: E501
             print("Trying next page...")
             driver.get(gallery_set)
+        except TimeoutException:
+            print("Timeout Session Occurred ~ Retrying")
         except NoSuchElementException:
             print("reached end of set")
             phset = True
@@ -570,24 +575,20 @@ def get_friends(userid_profile_link):
         print("A Timeout has occurred, we will retry again.")
 
 
-# ------------------------------------------------------------------------------------------
-#   ___              _                 _____            _       _   _     _       _
-#  / _ \            | |               /  ___|          (_)     | | | |   (_)     | |
-# / /_\ \_ __   __ _| |_   _ _______  \ `--.  ___   ___ _  __ _| | | |    _ _ __ | | _____
-# |  _  | '_ \ / _` | | | | |_  / _ \  `--. \/ _ \ / __| |/ _` | | | |   | | '_ \| |/ / __|
-# | | | | | | | (_| | | |_| |/ /  __/ /\__/ / (_) | (__| | (_| | | | |___| | | | |   <\__ \
-# \_| |_/_| |_|\__,_|_|\__, /___\___| \____/ \___/ \___|_|\__,_|_| \_____/_|_| |_|_|\_\___/
-#                       __/ |
-#                      |___/
-# ------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
+# ______ _               _                     _____ _               _
+# |  _  (_)             | |                   /  __ \ |             | |
+# | | | |_ _ __ ___  ___| |_ ___  _ __ _   _  | /  \/ |__   ___  ___| | _____ _ __
+# | | | | | '__/ _ \/ __| __/ _ \| '__| | | | | |   | '_ \ / _ \/ __| |/ / _ \ '__|
+# | |/ /| | | |  __/ (__| || (_) | |  | |_| | | \__/\ | | |  __/ (__|   <  __/ |
+# |___/ |_|_|  \___|\___|\__\___/|_|   \__, |  \____/_| |_|\___|\___|_|\_\___|_|
+#                                       __/ |
+#                                      |___/
+# ----------------------------------------------------------------------------------
 
-# def more_social(friend_id):
-#     results = SocialAnalyzer.run_as_object(username=friend_id, silent=True)
-#     as_file = friend_id + "_social_analytics.txt"
-#     safile = open(as_file, "a", encoding="utf-8", newline="\n")
-#     safile.writelines(results)
-#     safile.write("\n")
-#     safile.close()
+# def dir_check():
+#     p = PurePath(os.cwd())
+    
     
 
 # ------------------------------------------------------------------------
