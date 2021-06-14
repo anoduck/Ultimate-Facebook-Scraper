@@ -1,18 +1,18 @@
-```txt
-<!--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
-<!--     ____ _______________________                                       -->
-<!--    |    |   \_   _____/   _____/                                       -->
-<!--    |    |   /|    __) \_____  \                                        -->
-<!--    |    |  / |     \  /        \                                       -->
-<!--    |______/  \___  / /_______  /                                       -->
-<!--                  \/          \/                                        -->
-<!--    ________                       __   .__  _____.__           .___    -->
-<!--    \_____  \  __ _______    ____ |  | _|__|/ ____\__| ____   __| _/    -->
-<!--     /  / \  \|  |  \__  \ _/ ___\|  |/ /  \   __\|  |/ __ \ / __ |     -->
-<!--    /   \_/.  \  |  // __ \\  \___|    <|  ||  |  |  \  ___// /_/ |     -->
-<!--    \_____\ \_/____/(____  /\___  >__|_ \__||__|  |__|\___  >____ |     -->
-<!--           \__>          \/     \/     \/                 \/     \/     -->
-<!--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
+```shell
+#------------------------------------------------------------------------#
+#     ____ _______________________                                       #
+#    |    |   \_   _____/   _____/                                       #
+#    |    |   /|    __) \_____  \                                        #
+#    |    |  / |     \  /        \                                       #
+#    |______/  \___  / /_______  /                                       #
+#                  \/          \/                                        #
+#    ________                       __   .__  _____.__           .___    #
+#    \_____  \  __ _______    ____ |  | _|__|/ ____\__| ____   __| _/    #
+#     /  / \  \|  |  \__  \ _/ ___\|  |/ /  \   __\|  |/ __ \ / __ |     #
+#    /   \_/.  \  |  // __ \\  \___|    <|  ||  |  |  \  ___// /_/ |     #
+#    \_____\ \_/____/(____  /\___  >__|_ \__||__|  |__|\___  >____ |     #
+#           \__>          \/     \/     \/                 \/     \/     #
+#------------------------------------------------------------------------#
 ```
 
 ## UFS Scraper: Quackified Edition  
@@ -126,7 +126,7 @@ There are a few things that are recommended in order to encourage successful scr
 This script was originally written by Haris Muneer and associates, but what remains of the original work is less than ten percent of the original code base, the remaining 90% was written by yours truly. This was done before the license to the code was changed unknowingly from being open source to closed source. The remaining portions of the original code base is from the open source version and not the closed. Being in such state, this repository is free from all and any claims made upon it by the previous authors, and will be placed under the MIT license. 
 
 ```txt
-<!-- Copyright (c) 2021 anoduck
+# Copyright (c) 2021 anoduck
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -145,5 +145,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
- -->
+ #
 ```
