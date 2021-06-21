@@ -1,5 +1,5 @@
 selenium
-pyyaml
+ruamel_yaml
 ratelimit
 requests
 argparse

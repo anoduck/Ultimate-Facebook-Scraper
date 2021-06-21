@@ -170,9 +170,11 @@ def retry_on_timeout(exception):
     return isinstance(exception, TimeoutException)
     
 def retry_on_NoSuchElement(exception):
+    """ Return True if exception is NoSuchElement """
     return isinstance(exception, NoSuchElementException)
     
 def retry_response(exception):
+    """ Return True if exception is retry_response """
     return isinstance(exception, ErrorInResponseException)
 
 # ---------------------------------------------------------
@@ -400,47 +402,57 @@ def get_profile_photos(userid_profile_link):
             print("No Photo Element Found")
     try:
         driver.get(photos_url)
-        pp_element = "//div/section/ul/li/table/tbody/tr/td/span/a"
-        wait.until(EC.visibility_of_all_elements_located((By.XPATH, pp_element)))
-        albums_on_pp = driver.find_elements_by_xpath(pp_element)
-        if albums_on_pp and albums_on_pp[0].is_displayed():
-            print("Albums on Photo page")
-            internal_albums = True
-        else:
-            print("Albums not found on photos page")
-            internal_albums = False
-        pvoid_link = driver.find_element_by_xpath("//div[1]/section/a[text()='See All']").get_attribute("href")  # noqa: E501
+    except TimeoutException:
+        print("Timeout recieved attempting to get photos url")
+    pp_element = "//h3[text()='Albums']"
+    try:
+        wait.until(EC.visibility_of_element_located((By.XPATH, pp_element)))
+    except TimeoutException:
+        print("Timed out waiting on albums on photo page element to load")
+    albums_on_pp = driver.find_elements_by_xpath(pp_element)
+    if albums_on_pp and albums_on_pp[0].is_displayed():
+        print("Albums on Photo page")
+        internal_albums = True
+    else:
+        print("Albums not found on photos page")
+        internal_albums = False
+    pvoid = "//a[text()='See All']"
+    try:
         wait.until(EC.visibility_of_all_elements_located(
-            (By.XPATH, "//section/a[text()='See All']")))
-        photos_view = driver.find_elements_by_xpath("//section/a[text()='See All']")
-        for j in photos_view:
-            try:
-                pv_link = j.get_attribute("href")
-                driver.get(pv_link)
-                gallery_walker()
-            except NoSuchElementException:
-                print("Got a funky Reference There")
-                continue
-        # Move to albums
-        print("Working on albums now")
-        if internal_albums is True:
-            try:
-                driver.get(photos_url)
-                see_all_albums = driver.find_element_by_xpath(
-                    "//div[2]/div/div[2]/div[3]/section[2]/a")
-                albums_link = see_all_albums.get_attribute("href")
-                driver.get(albums_link)
-                photo_albums_links = driver.find_elements_by_xpath(
-                    "//li/table/tbody/tr/td/span/a")
-                album_collector(photo_albums_links)
-            except NoSuchElementException:
-                print("'See More Albums' element not found. Scraping directly from photos url:")
-                pial = "//div[2]/div/div[2]/div[2]/section/ul/li/table/tbody/tr/td/span/a"
-                photo_albums_links = driver.find_elements_by_xpath(pial)
-                album_collector(photo_albums_links)
-            except StaleElementReferenceException:
-                print("Found a stale element in album links")
-        else:
+            (By.XPATH, pvoid)))
+        pvoid_link = driver.find_element_by_xpath(pvoid).get_attribute("href")
+    except TimeoutException:
+        print("Timed out waiting on photo page album link to be visible")
+    photos_view = driver.find_elements_by_xpath("//a[text()='See All']")
+    for j in photos_view:
+        try:
+            pv_link = j.get_attribute("href")
+            driver.get(pv_link)
+            gallery_walker()
+        except NoSuchElementException:
+            print("Got a funky Reference There")
+            continue
+    # Move to albums
+    print("Working on albums now")
+    if internal_albums is True:
+        try:
+            driver.get(photos_url)
+            see_all_albums = driver.find_element_by_xpath(
+                "//div[2]/div/div[2]/div[3]/section[2]/a")
+            albums_link = see_all_albums.get_attribute("href")
+            driver.get(albums_link)
+            photo_albums_links = driver.find_elements_by_xpath(
+                "//li/table/tbody/tr/td/span/a")
+            album_collector(photo_albums_links)
+        except NoSuchElementException:
+            print("'See More Albums' element not found. Scraping directly from photos url:")
+            pial = "//div[2]/div/div[2]/div[2]/section/ul/li/table/tbody/tr/td/span/a"
+            photo_albums_links = driver.find_elements_by_xpath(pial)
+            album_collector(photo_albums_links)
+        except StaleElementReferenceException:
+            print("Found a stale element in album links")
+    else:
+        def gen_albums_page():
             print("Generating albums page...")
             f1 = furl(pvoid_link)
             int_fb_id = f1.args.popvalue('owner_id')
@@ -448,7 +460,7 @@ def get_profile_photos(userid_profile_link):
             f2 = furl(userid_profile_link)
             userid = f2.pathstr.strip("/")
             back_album_url = "albums/?owner_id="
-            album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id  # noqa: E501
+            album_page_url = facebook_https_prefix + facebook_link_body + userid + "/" + back_album_url + account_id
             print(album_page_url)
             driver.get(album_page_url)
             try:
@@ -463,18 +475,14 @@ def get_profile_photos(userid_profile_link):
                 except NoSuchElementException:
                     print("No more albums found")
                     clean_file_sets()
-    except TimeoutException:
-        print("Photo page timed out")
-        e = open("error_log.txt", "a", newline="\n")
-        e.writelines("Timeout error occurred while scrpaing " + userid_profile_link)
-        e.write("\n")
-        e.close()
-    except StaleElementReferenceException:
-        print("Found a reference to a stale Element in photo scrape (general error)")
-    except NoSuchElementException:
-        print("Fuck!! No Photos Found!")
-        print(traceback.format_exc())
-        clean_file_sets()
+    # except TimeoutException:
+    #     print("Photo page timed out")
+    # except StaleElementReferenceException:
+    #     print("Found a reference to a stale Element in photo scrape (general error)")
+    # except NoSuchElementException:
+    #     print("Fuck!! No Photos Found!")
+    #     print(traceback.format_exc())
+    #     clean_file_sets()
     
 
 
@@ -1009,13 +1017,13 @@ if __name__ == "__main__":
         "-fss",
         "--friends_small_size",
         help="Download friends pictures in small size?",
-        default=True,
+        default=False,
     )
     ap.add_argument(
         "-pss",
         "--photos_small_size",
         help="Download photos in small size?",
-        default=True,
+        default=False,
     )
     ap.add_argument(
         "-ts",
