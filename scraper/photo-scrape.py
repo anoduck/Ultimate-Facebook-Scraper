@@ -34,6 +34,9 @@ import sys
 #For pathlib
 from pathlib import *
 
+# For loading config.py
+from . import config
+
 # Custom Imports for time banning.
 import time
 import traceback
@@ -133,6 +136,27 @@ Firefox(executable_path="/usr/local/bin/geckodriver")
 
 # =========================================================================
 
+# ## Config
+# In[ ]:
+
+# -------------------------------------
+#  _____              __ _
+# /  __ \            / _(_)
+# | /  \/ ___  _ __ | |_ _  __ _
+# | |    / _ \| '_ \|  _| |/ _` |
+# | \__/\ (_) | | | | | | | (_| |
+#  \____/\___/|_| |_|_| |_|\__, |
+#                           __/ |
+#                          |___/
+# -------------------------------------
+
+def load_config():
+    if os.path.exists("config.py"):
+        Firefox(executable_path=config.driver)
+        desired_gender = config.desired_gender
+        username = config.username
+        password = config.password
+        input_file = config.input_file
 # ## Boolean
 
 # In[ ]:
