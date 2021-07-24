@@ -21,8 +21,6 @@ project.org
 scraper-mobile.py
 scraper.py
 scraper/scraper.py
-scraper/config.py
-scraper/tools
 
 # Custom additions
 chromedriver*
